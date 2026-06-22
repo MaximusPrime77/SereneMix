@@ -22,26 +22,26 @@ if (!fs.existsSync(COVERS_DIR)) {
   fs.mkdirSync(COVERS_DIR, { recursive: true });
 }
 
-function copyFolderSync(from, to) {
+async function copyFolderAsync(from, to) {
   if (!fs.existsSync(to)) {
-    fs.mkdirSync(to, { recursive: true });
+    await fs.promises.mkdir(to, { recursive: true });
   }
-  const files = fs.readdirSync(from);
+  const files = await fs.promises.readdir(from);
   for (const file of files) {
     const fromPath = path.join(from, file);
     const toPath = path.join(to, file);
-    const stat = fs.statSync(fromPath);
+    const stat = await fs.promises.stat(fromPath);
     if (stat.isDirectory()) {
-      copyFolderSync(fromPath, toPath);
+      await copyFolderAsync(fromPath, toPath);
     } else {
       if (!fs.existsSync(toPath)) {
-        fs.copyFileSync(fromPath, toPath);
+        await fs.promises.copyFile(fromPath, toPath);
       }
     }
   }
 }
 
-function checkAndMigrateSounds() {
+async function checkAndMigrateSounds() {
   try {
     // Only migrate if we are packaged
     if (!isPackaged) return;
@@ -50,7 +50,7 @@ function checkAndMigrateSounds() {
     const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.flac'];
     let hasAudio = false;
     if (fs.existsSync(SOUNDS_DIR)) {
-      const files = fs.readdirSync(SOUNDS_DIR);
+      const files = await fs.promises.readdir(SOUNDS_DIR);
       hasAudio = files.some(file => audioExtensions.includes(path.extname(file).toLowerCase()));
     }
 
@@ -66,7 +66,7 @@ function checkAndMigrateSounds() {
       let sourceDir = null;
       
       if (fs.existsSync(tempExtraDir)) {
-        const tempFiles = fs.readdirSync(tempExtraDir);
+        const tempFiles = await fs.promises.readdir(tempExtraDir);
         const tempHasAudio = tempFiles.some(file => audioExtensions.includes(path.extname(file).toLowerCase()));
         if (tempHasAudio) {
           sourceDir = tempExtraDir;
@@ -74,7 +74,7 @@ function checkAndMigrateSounds() {
       }
       
       if (!sourceDir && fs.existsSync(devDir)) {
-        const devFiles = fs.readdirSync(devDir);
+        const devFiles = await fs.promises.readdir(devDir);
         const devHasAudio = devFiles.some(file => audioExtensions.includes(path.extname(file).toLowerCase()));
         if (devHasAudio) {
           sourceDir = devDir;
@@ -83,8 +83,13 @@ function checkAndMigrateSounds() {
       
       if (sourceDir) {
         console.log(`Migrating sounds from ${sourceDir} to ${SOUNDS_DIR}`);
-        copyFolderSync(sourceDir, SOUNDS_DIR);
+        await copyFolderAsync(sourceDir, SOUNDS_DIR);
         console.log('Migration completed successfully!');
+        
+        // Notify renderer that sounds have changed so it can load them
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('sounds-changed');
+        }
       } else {
         console.log('No default sound source found for migration.');
       }
