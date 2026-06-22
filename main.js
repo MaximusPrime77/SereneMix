@@ -279,7 +279,7 @@ ipcMain.handle('get-sounds', async () => {
           title: fileMetadata.title || autoTitle,
           cover: fileMetadata.cover || null,
           category: fileMetadata.category || 'Genel',
-          volume: fileMetadata.volume !== undefined ? fileMetadata.volume : 0.5,
+          volume: fileMetadata.volume !== undefined ? fileMetadata.volume : 1.0,
           color: fileMetadata.color || getRandomGradient()
         });
       }
