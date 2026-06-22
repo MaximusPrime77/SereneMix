@@ -166,11 +166,8 @@ function updateTrayMenu(lang) {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'tray_icon.png');
-  
-  // Always recreate icon to guarantee it is never corrupted on disk
-  createDefaultIcon(iconPath);
-
+  // Use app_icon.png directly as it is packaged in ASAR and visible on both light and dark themes
+  const iconPath = path.join(__dirname, 'app_icon.png');
   const icon = nativeImage.createFromPath(iconPath);
   appTray = new Tray(icon);
   
@@ -194,11 +191,7 @@ function toggleWindow() {
   }
 }
 
-// 32x32 transparent PNG icon with a white soundwave/speaker symbol
-function createDefaultIcon(filePath) {
-  const base64Png = 'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5gYUDg4XNSsBSwAAAcFJREFUWMPtlztv00AYhp8zEoc0kSp1QEIsQAwMSAwsDEgsqtShUiUsLMjfsP8AEhISYmFiYWJgYWDo0IEhSpU6tCEhDkmcx+HZqbEdYhsnQOrZrn38PM/7vud9cx1e+ZfK92sAh12/P79bAIed/sB11eXz+sW69N5fAzi4BqBqBqqaVbU6p/rXz6P19f18mXwXfAB9AM9T9x0gB46B5Urr2FkP3AOvUus20EutE2eD1Dr7L8y8mY0dPAeWyq2+szVnC+C05tQ5Z1Nnz/6FeTtr4E55YQ4sOmc7zjZz9sp1b3YV2AY2K472nC05WwU2XfdmV4EZYLmsVbOznf43M/N2p4EnwFLJ1cDOeql1WnOaWWgDeAJslF1q1pxtAOv/wrydtYF7wL1yrgX3gXvOpuk2sA5MypmZWT/dfmZeL1tXgAnQVc4dAPfTfALMV/rZc7YFTIC2c/YOeJjmvXJuArTT/N517sE9O1sDXmfe7oCnwFPnvAbO/zPzkZ09AV4D56XWbWAEvAKeyvMpcF5pdZ1NUmvjNfD8p9Y3gZfAc+/9c+D5Lzvvvfe+895777333nvvvff/+rX+AEXy+u13F+72AAAAAElFTkSuQmCC';
-  fs.writeFileSync(filePath, Buffer.from(base64Png, 'base64'));
-}
+// Default icon creation function removed because it causes write errors in packaged ASAR environments
 
 // App lifecycle
 app.whenReady().then(() => {

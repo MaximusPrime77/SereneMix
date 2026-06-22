@@ -57,7 +57,7 @@ body {
 /* Custom Premium Titlebar */
 .titlebar {
   height: 38px;
-  background: rgba(11, 16, 33, 0.95); /* Premium koyu lacivert to match the app perfectly */
+  background: rgba(5, 8, 22, 0.96); /* Premium darker navy blue */
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   border-bottom: 1px solid var(--glass-border);
