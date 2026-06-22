@@ -77,10 +77,16 @@ npm run build
 Once the build completes, your portable executable will be located in the `dist/` directory.
 
 > [!IMPORTANT]
-> **Running the Portable Executable (.exe):**
-> - **Dedicated Folder Required:** To avoid cluttering your Desktop or Downloads folder, you **must** place `SereneMix 1.0.0.exe` inside a dedicated empty folder (e.g., `C:\Apps\SereneMix\`) before running it. When executed, it will automatically create a folder named `SereneMix_Data` in the same directory to store your audio files, custom cover art, and configuration data.
-> - **First Launch Delay:** On the very first launch, the application will take a few seconds to create the data folder and migrate the default sounds. Please wait patiently for a few seconds for the setup to complete. 
+> **How to Run the App:**
+> 
+> ### 📌 For Portable Version (`SereneMix.1.0.0.portable.exe`):
+> - **Dedicated Folder Required:** To avoid cluttering your Desktop or Downloads folder, you **must** place `SereneMix.1.0.0.portable.exe` inside a dedicated empty folder (e.g., `C:\Apps\SereneMix\`) before running it. When executed, it will automatically create a folder named `SereneMix_Data` in the same directory to store your audio files, custom cover art, and configuration data.
+> - **First Launch Delay:** On the very first launch, the application will take a few seconds to extract and copy the default sounds to the `SereneMix_Data` folder. Please wait patiently for a few seconds for the setup to complete.
 > - **Portability:** If you want to carry your custom sounds and configurations to another computer, simply copy both the `.exe` file and its adjacent `SereneMix_Data` folder together.
+> 
+> ### 📌 For Zip Version (`SereneMix-1.0.0-win.zip`):
+> - **No Setup Delay:** This compressed archive already contains the application files and the pre-packaged `SereneMix_Data` folder with all default sounds.
+> - **Running:** Simply extract the `.zip` file to any directory and double-click `SereneMix.exe` inside the extracted folder. All sounds will be immediately available without any setup delay.
 
 ---
 
