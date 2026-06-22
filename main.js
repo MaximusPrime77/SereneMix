@@ -101,7 +101,8 @@ function createWindow() {
     minWidth: 800,
     minHeight: 550,
     frame: false, // Frameless for premium borderless look
-    transparent: true,
+    transparent: false,
+    backgroundColor: '#0b0c10',
     hasShadow: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

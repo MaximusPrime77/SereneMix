@@ -11,7 +11,7 @@ let sleepTimeRemaining = 0; // seconds
 let selectedSoundForEdit = null;
 
 // Multi-language State
-let currentLanguage = localStorage.getItem('serenemix_lang') || 'tr';
+let currentLanguage = localStorage.getItem('serenemix_lang') || 'en';
 let translations = {};
 
 // DOM Elements
@@ -211,6 +211,10 @@ function renderSoundsGrid() {
     const transKey = catKeyMap[sound.category] || 'cat_other';
     const translatedCategory = translations[transKey] || sound.category;
 
+    // Translate sound title dynamically if key exists
+    const titleKey = `sound_${sound.filename.replace(/\.[^/.]+$/, "")}`;
+    const translatedTitle = translations[titleKey] || sound.title;
+
     card.innerHTML = `
       <div class="eq-container">
         <div class="eq-bar"></div>
@@ -229,7 +233,7 @@ function renderSoundsGrid() {
       </div>
       <div class="sound-info-container">
         <div class="sound-meta">
-          <span class="sound-name" title="${sound.title}">${sound.title}</span>
+          <span class="sound-name" title="${translatedTitle}">${translatedTitle}</span>
           <span class="sound-category">${translatedCategory}</span>
         </div>
         <div class="card-actions">

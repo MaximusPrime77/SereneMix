@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,13 +11,13 @@
 <body>
   <!-- Window Controls (Floating at Top Right) -->
   <div class="window-controls">
-    <button class="win-btn" id="btn-minimize" title="Küçült">
+    <button class="win-btn" id="btn-minimize" title="Minimize">
       <svg width="10" height="1" viewBox="0 0 10 1" fill="none"><path d="M0 0H10V1H0V0Z" fill="currentColor"/></svg>
     </button>
-    <button class="win-btn" id="btn-maximize" title="Ekranı Kapla">
+    <button class="win-btn" id="btn-maximize" title="Maximize">
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M0 0H10V10H0V0ZM1 1V9H9V1H1Z" fill="currentColor"/></svg>
     </button>
-    <button class="win-btn close" id="btn-close" title="Kapat (Tepsiye Gizle)">
+    <button class="win-btn close" id="btn-close" title="Close (Hide to Tray)">
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M0 0L10 10M10 0L0 10" stroke="currentColor" stroke-width="1.2"/></svg>
     </button>
   </div>
@@ -37,7 +37,7 @@
       </div>
 
       <div class="sidebar-header">
-        <p data-i18n="slogan">Kendi huzurlu karışımınızı oluşturun ve gevşeyin.</p>
+        <p data-i18n="slogan">Create your own peaceful mix and relax.</p>
       </div>
 
       <div class="global-controls">
@@ -45,37 +45,37 @@
         <button id="btn-global-play" class="control-btn primary">
           <svg class="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           <svg class="icon-pause hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-          <span data-i18n="play_all">Tümünü Çal</span>
+          <span data-i18n="play_all">Play All</span>
         </button>
 
         <!-- Custom Sleep Timer -->
         <div class="sleep-timer-container">
           <div class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <span data-i18n="sleep_timer">Uyku Zamanlayıcı</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span data-i18n="sleep_timer">Sleep Timer</span>
           </div>
           <div class="timer-controls">
             <!-- Custom Dropdown Widget -->
             <div id="custom-timer-select" class="custom-select-container">
               <div id="timer-dropdown-trigger" class="custom-select-trigger">
-                <span id="timer-trigger-text" data-i18n="timer_off">Kapat</span>
+                <span id="timer-trigger-text" data-i18n="timer_off">Off</span>
                 <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </div>
               <div id="timer-dropdown-options" class="custom-select-options hidden">
-                <div class="custom-option active" data-value="0" data-i18n="timer_off">Kapat</div>
-                <div class="custom-option" data-value="15" data-i18n="timer_15m">15 Dakika</div>
-                <div class="custom-option" data-value="30" data-i18n="timer_30m">30 Dakika</div>
-                <div class="custom-option" data-value="45" data-i18n="timer_45m">45 Dakika</div>
-                <div class="custom-option" data-value="60" data-i18n="timer_1h">1 Saat</div>
-                <div class="custom-option" data-value="90" data-i18n="timer_1_5h">1.5 Saat</div>
-                <div class="custom-option" data-value="120" data-i18n="timer_2h">2 Saat</div>
+                <div class="custom-option active" data-value="0" data-i18n="timer_off">Off</div>
+                <div class="custom-option" data-value="15" data-i18n="timer_15m">15 Minutes</div>
+                <div class="custom-option" data-value="30" data-i18n="timer_30m">30 Minutes</div>
+                <div class="custom-option" data-value="45" data-i18n="timer_45m">45 Minutes</div>
+                <div class="custom-option" data-value="60" data-i18n="timer_1h">1 Hour</div>
+                <div class="custom-option" data-value="90" data-i18n="timer_1_5h">1.5 Hours</div>
+                <div class="custom-option" data-value="120" data-i18n="timer_2h">2 Hours</div>
               </div>
             </div>
 
             <!-- Active Timer Countdown Display -->
             <div id="timer-display" class="timer-display hidden">
               <span id="timer-time">00:00</span>
-              <button id="btn-cancel-timer" class="btn-icon" title="Zamanlayıcıyı İptal Et">
+              <button id="btn-cancel-timer" class="btn-icon" title="Cancel Timer">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
@@ -86,11 +86,11 @@
         <div class="action-buttons">
           <button id="btn-add-sound" class="action-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            <span data-i18n="add_sound">Yeni Ses Ekle</span>
+            <span data-i18n="add_sound">Add New Sound</span>
           </button>
           <button id="btn-open-folder" class="action-btn secondary">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            <span data-i18n="open_folder">Klasörü Aç</span>
+            <span data-i18n="open_folder">Open Folder</span>
           </button>
         </div>
       </div>
@@ -100,34 +100,34 @@
         <div class="section-title-container">
           <div class="section-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-            <span data-i18n="saved_mixes">Kayıtlı Karışımlarım</span>
+            <span data-i18n="saved_mixes">Saved Mixes</span>
           </div>
-          <button id="btn-save-mix" class="btn-icon-text" title="Mevcut kombinasyonu kaydet">
+          <button id="btn-save-mix" class="btn-icon-text" title="Save current combination">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-            <span data-i18n="save">Kaydet</span>
+            <span data-i18n="save">Save</span>
           </button>
         </div>
         <div id="mixes-list" class="mixes-list">
-          <p class="empty-text" data-i18n="no_saved_mixes">Henüz kayıtlı karışımınız yok.</p>
+          <p class="empty-text" data-i18n="no_saved_mixes">No saved mixes yet.</p>
         </div>
       </div>
 
       <!-- Sidebar Footer -->
       <div class="sidebar-footer">
         <div class="settings-item">
-          <span data-i18n="run_at_startup">Başlangıçta Çalıştır</span>
+          <span data-i18n="run_at_startup">Run at Windows Startup</span>
           <label class="switch">
             <input type="checkbox" id="chk-startup">
             <span class="slider"></span>
           </label>
         </div>
         <div class="settings-item">
-          <span>Dil / Language</span>
-          <button id="btn-lang-toggle" class="btn-lang-toggle">TR</button>
+          <span>Language / Dil</span>
+          <button id="btn-lang-toggle" class="btn-lang-toggle">EN</button>
         </div>
         <button id="btn-about" class="btn-about-link">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <span data-i18n="about_app">Uygulama Hakkında</span>
+          <span data-i18n="about_app">About App</span>
         </button>
       </div>
     </aside>
@@ -137,17 +137,17 @@
       <!-- Categories Filter / Header -->
       <header class="workspace-header">
         <div class="categories-tabs">
-          <button class="category-tab active" data-category="all" data-i18n="cat_all">Tümü</button>
-          <button class="category-tab" data-category="Doğa" data-i18n="cat_nature">Doğa</button>
-          <button class="category-tab" data-category="Şehir" data-i18n="cat_urban">Şehir</button>
-          <button class="category-tab" data-category="Hayvanlar" data-i18n="cat_animals">Hayvanlar</button>
-          <button class="category-tab" data-category="Müzik" data-i18n="cat_music">Müzik</button>
-          <button class="category-tab" data-category="Enstrümantal" data-i18n="cat_bells">Ziller</button>
-          <button class="category-tab" data-category="Gürültü" data-i18n="cat_noise">Gürültü</button>
-          <button class="category-tab" data-category="Genel" data-i18n="cat_other">Diğer</button>
+          <button class="category-tab active" data-category="all" data-i18n="cat_all">All</button>
+          <button class="category-tab" data-category="Doğa" data-i18n="cat_nature">Nature</button>
+          <button class="category-tab" data-category="Şehir" data-i18n="cat_urban">Urban</button>
+          <button class="category-tab" data-category="Hayvanlar" data-i18n="cat_animals">Animals</button>
+          <button class="category-tab" data-category="Müzik" data-i18n="cat_music">Music</button>
+          <button class="category-tab" data-category="Enstrümantal" data-i18n="cat_bells">Bells</button>
+          <button class="category-tab" data-category="Gürültü" data-i18n="cat_noise">Noise</button>
+          <button class="category-tab" data-category="Genel" data-i18n="cat_other">Other</button>
         </div>
         <div class="search-bar-container">
-          <input type="text" id="search-input" placeholder="Seslerde ara..." data-i18n="search_placeholder">
+          <input type="text" id="search-input" placeholder="Search sounds..." data-i18n="search_placeholder">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
         </div>
       </header>
@@ -156,7 +156,7 @@
       <div id="sounds-grid" class="sounds-grid">
         <div class="loading-state">
           <div class="spinner"></div>
-          <p data-i18n="loading_sounds">Sesler yükleniyor...</p>
+          <p data-i18n="loading_sounds">Loading sounds...</p>
         </div>
       </div>
     </main>
@@ -167,7 +167,7 @@
   <div id="edit-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 data-i18n="customize_sound">Sesi Özelleştir</h2>
+        <h2 data-i18n="customize_sound">Customize Sound</h2>
         <button id="btn-close-modal" class="btn-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
@@ -176,36 +176,36 @@
         <input type="hidden" id="edit-filename">
         
         <div class="form-group">
-          <label for="edit-title" data-i18n="sound_title">Ses Başlığı</label>
-          <input type="text" id="edit-title" class="form-control" placeholder="Örn. Yaz Yağmuru" data-i18n="sound_title_placeholder">
+          <label for="edit-title" data-i18n="sound_title">Sound Title</label>
+          <input type="text" id="edit-title" class="form-control" placeholder="e.g. Summer Rain" data-i18n="sound_title_placeholder">
         </div>
 
         <div class="form-group">
-          <label for="edit-category" data-i18n="category">Kategori</label>
+          <label for="edit-category" data-i18n="category">Category</label>
           <select id="edit-category" class="form-control">
-            <option value="Doğa" data-i18n="cat_nature">Doğa</option>
-            <option value="Şehir" data-i18n="cat_urban">Şehir</option>
-            <option value="Hayvanlar" data-i18n="cat_animals">Hayvanlar</option>
-            <option value="Müzik" data-i18n="cat_music">Müzik</option>
-            <option value="Enstrümantal" data-i18n="cat_bells">Enstrümantal</option>
-            <option value="Gürültü" data-i18n="cat_noise">Gürültü</option>
-            <option value="Genel" data-i18n="cat_other">Diğer</option>
+            <option value="Doğa" data-i18n="cat_nature">Nature</option>
+            <option value="Şehir" data-i18n="cat_urban">Urban</option>
+            <option value="Hayvanlar" data-i18n="cat_animals">Animals</option>
+            <option value="Müzik" data-i18n="cat_music">Music</option>
+            <option value="Enstrümantal" data-i18n="cat_bells">Bells</option>
+            <option value="Gürültü" data-i18n="cat_noise">Noise</option>
+            <option value="Genel" data-i18n="cat_other">Other</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label data-i18n="cover_image">Kapak Görseli</label>
+          <label data-i18n="cover_image">Cover Image</label>
           <div class="cover-uploader">
             <div id="edit-cover-preview" class="cover-preview"></div>
             <div class="uploader-buttons">
-              <button id="btn-select-cover" class="action-btn secondary" data-i18n="select_image">Görsel Seç</button>
-              <p class="help-text">JPG, PNG veya WebP formatında görsel yükleyin.</p>
+              <button id="btn-select-cover" class="action-btn secondary" data-i18n="select_image">Select Image</button>
+              <p class="help-text" data-i18n="cover_help_text">Upload image in JPG, PNG or WebP format.</p>
             </div>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button id="btn-save-modal" class="action-btn" data-i18n="save">Kaydet</button>
+        <button id="btn-save-modal" class="action-btn" data-i18n="save">Save</button>
       </div>
     </div>
   </div>
@@ -214,19 +214,19 @@
   <div id="save-mix-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 data-i18n="save_mix_title">Karışımı Kaydet</h2>
+        <h2 data-i18n="save_mix_title">Save Mix</h2>
         <button id="btn-close-mix-modal" class="btn-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label for="mix-name-input" data-i18n="save_mix_title">Karışım İsmi</label>
-          <input type="text" id="mix-name-input" class="form-control" placeholder="Örn. Odaklanma Modu (Yağmur + Fırtına)" data-i18n="mix_name_placeholder">
+          <label for="mix-name-input" data-i18n="mix_name_label">Mix Name</label>
+          <input type="text" id="mix-name-input" class="form-control" placeholder="e.g. Focus Mode (Rain + Fireplace)" data-i18n="mix_name_placeholder">
         </div>
       </div>
       <div class="modal-footer">
-        <button id="btn-confirm-save-mix" class="action-btn" data-i18n="save_mix_btn">Karışımı Kaydet</button>
+        <button id="btn-confirm-save-mix" class="action-btn" data-i18n="save_mix_btn">Save Mix</button>
       </div>
     </div>
   </div>
@@ -235,7 +235,7 @@
   <div id="about-modal" class="modal-overlay hidden">
     <div class="modal-card about-card">
       <div class="modal-header">
-        <h2 data-i18n="about_title">Hakkında</h2>
+        <h2 data-i18n="about_title">About</h2>
         <button id="btn-close-about-modal" class="btn-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
@@ -244,7 +244,7 @@
         <div class="developer-profile">
           <div class="avatar-placeholder">M</div>
           <h3>Maximus Decimus Meridius</h3>
-          <p class="dev-role">Geliştirici & Tasarımcı</p>
+          <p class="dev-role">Developer & Designer</p>
         </div>
         <hr class="divider">
         <div class="about-info-list">
@@ -253,15 +253,15 @@
             <a href="#" id="link-github" class="info-value">github.com/MaximusPrime77</a>
           </div>
           <div class="info-item">
-            <span class="info-label">E-Posta</span>
+            <span class="info-label">E-Mail</span>
             <a href="#" id="link-email" class="info-value">b.maximus.prime@gmail.com</a>
           </div>
           <div class="info-item">
-            <span class="info-label">Sürüm</span>
+            <span class="info-label">Version</span>
             <span class="info-value">v1.0.0 (Premium Portable)</span>
           </div>
         </div>
-        <p class="about-description" data-i18n="about_desc">Bu uygulama, huzurlu ve odaklanmış bir ortam yaratmak amacıyla geliştirilmiştir.</p>
+        <p class="about-description" data-i18n="about_desc">This application was developed to create a peaceful and focused environment.</p>
       </div>
     </div>
   </div>
