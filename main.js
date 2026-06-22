@@ -293,6 +293,45 @@ ipcMain.handle('save-sound-metadata', async (event, filename, data) => {
   }
 });
 
+// Delete sound file physically and clean its metadata
+ipcMain.handle('delete-sound', async (event, filename) => {
+  try {
+    const filePath = path.join(SOUNDS_DIR, filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Read metadata
+    let metadata = {};
+    if (fs.existsSync(METADATA_PATH)) {
+      try {
+        metadata = JSON.parse(fs.readFileSync(METADATA_PATH, 'utf-8'));
+      } catch (e) {}
+    }
+
+    // Delete cover if exists
+    if (metadata[filename] && metadata[filename].cover) {
+      const coverPath = path.join(SOUNDS_DIR, metadata[filename].cover);
+      if (fs.existsSync(coverPath)) {
+        try {
+          fs.unlinkSync(coverPath);
+        } catch (e) {
+          console.error('Failed to delete cover file:', e);
+        }
+      }
+    }
+
+    // Delete metadata entry
+    delete metadata[filename];
+    fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+
 // Add sound file from dialog
 ipcMain.handle('add-sound-dialog', async () => {
   try {

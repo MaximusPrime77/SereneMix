@@ -1,4 +1,4 @@
-// Huzur Sesleri - Frontend Logic
+// SereneMix - Frontend Logic with i18n support
 
 // State Management
 let sounds = [];
@@ -9,6 +9,10 @@ let isGlobalPlaying = false;
 let sleepTimer = null;
 let sleepTimeRemaining = 0; // seconds
 let selectedSoundForEdit = null;
+
+// Multi-language State
+let currentLanguage = localStorage.getItem('serenemix_lang') || 'tr';
+let translations = {};
 
 // DOM Elements
 const btnMinimize = document.getElementById('btn-minimize');
@@ -49,14 +53,69 @@ const btnCloseMixModal = document.getElementById('btn-close-mix-modal');
 const btnConfirmSaveMix = document.getElementById('btn-confirm-save-mix');
 const mixNameInput = document.getElementById('mix-name-input');
 
+// Category to translation key mapping
+const catKeyMap = {
+  'Doğa': 'cat_nature',
+  'Şehir': 'cat_urban',
+  'Hayvanlar': 'cat_animals',
+  'Müzik': 'cat_music',
+  'Enstrümantal': 'cat_bells',
+  'Gürültü': 'cat_noise',
+  'Genel': 'cat_other'
+};
+
 // Initialize App
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initWindowControls();
-  loadSounds();
+  await loadLanguage(currentLanguage);
+  await loadSounds();
   loadSavedMixes();
   loadSettings();
   initEventListeners();
 });
+
+// Load Translation Files
+async function loadLanguage(lang) {
+  currentLanguage = lang;
+  localStorage.setItem('serenemix_lang', lang);
+
+  try {
+    const response = await fetch(`./locales/${lang}.json`);
+    translations = await response.json();
+
+    // Translate DOM elements marked with data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[key]) {
+        if (el.tagName === 'INPUT') {
+          el.placeholder = translations[key];
+        } else if (el.tagName === 'OPTION') {
+          el.textContent = translations[key];
+        } else {
+          // Replace only the text node inside elements (retaining internal SVGs or icons)
+          const textNode = Array.from(el.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+          if (textNode) {
+            textNode.textContent = translations[key];
+          } else {
+            el.textContent = translations[key];
+          }
+        }
+      }
+    });
+
+    // Update Lang toggle button display
+    const btnLangToggle = document.getElementById('btn-lang-toggle');
+    if (btnLangToggle) {
+      btnLangToggle.textContent = lang.toUpperCase();
+    }
+
+    // Refresh UI elements
+    updateGlobalPlayButtonState();
+    loadSavedMixes();
+  } catch (err) {
+    console.error('Failed to load language files:', err);
+  }
+}
 
 // Window Controls
 function initWindowControls() {
@@ -84,7 +143,7 @@ async function loadSounds(silent = false) {
     soundsGrid.innerHTML = `
       <div class="loading-state">
         <div class="spinner"></div>
-        <p>Sesler yükleniyor...</p>
+        <p>${translations['loading_sounds'] || 'Sesler yükleniyor...'}</p>
       </div>
     `;
   }
@@ -107,7 +166,7 @@ async function loadSounds(silent = false) {
     if (!silent) {
       soundsGrid.innerHTML = `
         <div class="loading-state">
-          <p class="error-text">Sesler yüklenirken bir hata oluştu: ${response.error}</p>
+          <p class="error-text">${translations['load_error'] || 'Sesler yüklenirken bir hata oluştu:'} ${response.error}</p>
         </div>
       `;
     }
@@ -117,6 +176,7 @@ async function loadSounds(silent = false) {
 // Render Grid
 function renderSoundsGrid() {
   const filtered = sounds.filter(sound => {
+    // Check if the tab filtering matches
     const matchesCategory = currentCategory === 'all' || sound.category === currentCategory;
     const matchesSearch = sound.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           sound.filename.toLowerCase().includes(searchQuery.toLowerCase());
@@ -126,7 +186,7 @@ function renderSoundsGrid() {
   if (filtered.length === 0) {
     soundsGrid.innerHTML = `
       <div class="loading-state">
-        <p>Klasörünüz boş veya aramanızla eşleşen ses bulunamadı.</p>
+        <p>${translations['no_sounds_found'] || 'Klasörünüz boş veya aramanızla eşleşen ses bulunamadı.'}</p>
       </div>
     `;
     return;
@@ -147,6 +207,10 @@ function renderSoundsGrid() {
       coverStyle = `background: ${sound.color};`;
     }
 
+    // Translate category dynamically on sound card display
+    const transKey = catKeyMap[sound.category] || 'cat_other';
+    const translatedCategory = translations[transKey] || sound.category;
+
     card.innerHTML = `
       <div class="eq-container">
         <div class="eq-bar"></div>
@@ -166,11 +230,16 @@ function renderSoundsGrid() {
       <div class="sound-info-container">
         <div class="sound-meta">
           <span class="sound-name" title="${sound.title}">${sound.title}</span>
-          <span class="sound-category">${sound.category}</span>
+          <span class="sound-category">${translatedCategory}</span>
         </div>
-        <button class="btn-icon btn-card-edit" onclick="openEditModal('${sound.filename}')" title="Düzenle">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        </button>
+        <div class="card-actions">
+          <button class="btn-icon btn-card-edit" onclick="openEditModal('${sound.filename}')" title="${translations['customize_sound'] || 'Düzenle'}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+          <button class="btn-icon btn-card-delete" onclick="confirmDeleteSound('${sound.filename}')" title="${translations['delete'] || 'Sil'}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
       </div>
       <div class="volume-container">
         <svg class="volume-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -200,8 +269,8 @@ async function toggleSound(filename) {
       await audio.play();
       activeAudio[filename] = audio;
     } catch (err) {
-      console.error('Ses oynatılamadı:', err);
-      alert('Ses dosyası çalınamadı. Dosyanın mevcut olduğundan emin olun.');
+      console.error(translations['alert_audio_error_log'] || 'Ses oynatılamadı:', err);
+      alert(translations['alert_audio_error'] || 'Ses dosyası çalınamadı. Dosyanın mevcut olduğundan emin olun.');
       return;
     }
   }
@@ -235,12 +304,12 @@ function updateGlobalPlayButtonState() {
 
   if (isGlobalPlaying) {
     btnGlobalPlay.classList.add('active');
-    btnText.textContent = "Tümünü Durdur";
+    btnText.textContent = translations['stop_all'] || "Tümünü Durdur";
     iconPlay.classList.add('hidden');
     iconPause.classList.remove('hidden');
   } else {
     btnGlobalPlay.classList.remove('active');
-    btnText.textContent = "Tümünü Çal";
+    btnText.textContent = translations['play_all'] || "Tümünü Çal";
     iconPlay.classList.remove('hidden');
     iconPause.classList.add('hidden');
   }
@@ -352,7 +421,7 @@ function initEventListeners() {
   btnSaveMix.addEventListener('click', () => {
     const activeCount = Object.keys(activeAudio).length;
     if (activeCount === 0) {
-      alert('Karışım oluşturmak için lütfen en az bir ses çalın.');
+      alert(translations['alert_play_first'] || 'Karışım oluşturmak için lütfen en az bir ses çalın.');
       return;
     }
     mixNameInput.value = '';
@@ -366,7 +435,7 @@ function initEventListeners() {
   btnConfirmSaveMix.addEventListener('click', () => {
     const name = mixNameInput.value.trim();
     if (!name) {
-      alert('Lütfen karışım için bir isim girin.');
+      alert(translations['alert_enter_name'] || 'Lütfen karışım için bir isim girin.');
       return;
     }
     saveMix(name);
@@ -393,6 +462,15 @@ function initEventListeners() {
         alert('Başlangıç ayarı değiştirilemedi.');
         e.target.checked = !e.target.checked;
       }
+    });
+  }
+
+  // Language Toggle Button Trigger
+  const btnLangToggle = document.getElementById('btn-lang-toggle');
+  if (btnLangToggle) {
+    btnLangToggle.addEventListener('click', () => {
+      const nextLang = currentLanguage === 'tr' ? 'en' : 'tr';
+      loadLanguage(nextLang);
     });
   }
 
@@ -455,20 +533,22 @@ function startSleepTimer(minutes) {
   }, 1000);
 }
 
+// Show sleep timer value dynamically
 function updateTimerDisplay() {
   const mins = Math.floor(sleepTimeRemaining / 60);
   const secs = sleepTimeRemaining % 60;
   timerTime.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+// Reset Sleep Timer widget
 function cancelSleepTimer() {
   if (sleepTimer) {
     clearInterval(sleepTimer);
     sleepTimer = null;
   }
   
-  // Reset trigger display text
-  timerTriggerText.textContent = "Kapat";
+  // Reset trigger display text based on translations
+  timerTriggerText.textContent = translations['timer_off'] || "Kapat";
   customOptions.forEach(opt => {
     if (opt.dataset.value === "0") opt.classList.add('active');
     else opt.classList.remove('active');
@@ -478,6 +558,7 @@ function cancelSleepTimer() {
   timerDisplay.classList.add('hidden');
 }
 
+// Fade Out Volume
 function fadeOutAndStopSounds() {
   const activeCount = Object.keys(activeAudio).length;
   if (activeCount === 0) return;
@@ -517,7 +598,7 @@ function loadSavedMixes() {
   const mixes = JSON.parse(localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
   
   if (mixes.length === 0) {
-    mixesList.innerHTML = '<p class="empty-text">Henüz kayıtlı karışımınız yok.</p>';
+    mixesList.innerHTML = `<p class="empty-text">${translations['no_saved_mixes'] || 'Henüz kayıtlı karışımınız yok.'}</p>`;
     return;
   }
 
@@ -543,6 +624,7 @@ function loadSavedMixes() {
   });
 }
 
+// Save Mix settings
 function saveMix(name) {
   const currentMixSounds = [];
   Object.keys(activeAudio).forEach(filename => {
@@ -564,6 +646,7 @@ function saveMix(name) {
   loadSavedMixes();
 }
 
+// Apply Saved Mix
 function applyMix(id) {
   const mixes = JSON.parse(localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
   const mix = mixes.find(m => m.id === id);
@@ -580,6 +663,7 @@ function applyMix(id) {
   });
 }
 
+// Delete Mix setting
 function deleteMix(id, event) {
   event.stopPropagation();
   let mixes = JSON.parse(localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
@@ -613,6 +697,7 @@ function updateCoverPreview(sound) {
   }
 }
 
+// Add cover image from disk
 async function uploadCoverImage() {
   if (!selectedSoundForEdit) return;
   
@@ -626,13 +711,14 @@ async function uploadCoverImage() {
   }
 }
 
+// Save sound metadata to file
 async function saveEditDetails() {
   const filename = editFilename.value;
   const title = editTitle.value.trim();
   const category = editCategory.value;
 
   if (!title) {
-    alert('Lütfen bir başlık girin.');
+    alert(translations['alert_enter_title'] || 'Lütfen bir başlık girin.');
     return;
   }
 
@@ -654,3 +740,30 @@ async function saveEditDetails() {
     alert(`Kaydedilemedi: ${response.error}`);
   }
 }
+
+// Confirm and delete sound file physically
+async function confirmDeleteSound(filename) {
+  const sound = sounds.find(s => s.filename === filename);
+  if (!sound) return;
+
+  const confirmMsg = currentLanguage === 'tr' 
+    ? `"${sound.title}" sesini silmek istediğinize emin misiniz?` 
+    : `Are you sure you want to delete "${sound.title}"?`;
+
+  if (confirm(confirmMsg)) {
+    // Stop sound if it's currently playing
+    if (activeAudio[filename]) {
+      activeAudio[filename].pause();
+      delete activeAudio[filename];
+      updateGlobalPlayButtonState();
+    }
+
+    const response = await window.api.deleteSound(filename);
+    if (response.success) {
+      await loadSounds(true); // reload grid silently
+    } else {
+      alert(`Silme başarısız: ${response.error}`);
+    }
+  }
+}
+

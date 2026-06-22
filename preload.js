@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('api', {
   getStartupSettings: () => ipcRenderer.invoke('get-startup-settings'),
   setStartupSettings: (openAtLogin) => ipcRenderer.invoke('set-startup-settings', openAtLogin),
   getSoundUrl: (filename) => ipcRenderer.invoke('get-sound-url', filename),
+  deleteSound: (filename) => ipcRenderer.invoke('delete-sound', filename),
+  
   
   // Window controls
   minimize: () => ipcRenderer.send('window-minimize'),
