@@ -78,9 +78,9 @@ Once the build completes, your portable executable will be located in the `dist/
 
 > [!IMPORTANT]
 > **Running the Portable Executable (.exe):**
-> When you run the compiled portable `SereneMix 1.0.0.exe` for the first time, it will automatically create a folder named `SereneMix_Data` in the **same directory** as the `.exe` to store your audio files, custom cover art, and configuration data.
-> 
-> **Recommendation:** To avoid cluttering folders like your Desktop or Downloads, it is highly recommended to place `SereneMix 1.0.0.exe` inside a dedicated empty folder (e.g., `C:\Apps\SereneMix\`) and run it from there. If you want to carry your custom sounds and configurations to another computer, simply copy both the `.exe` file and its adjacent `SereneMix_Data` folder together.
+> - **Dedicated Folder Required:** To avoid cluttering your Desktop or Downloads folder, you **must** place `SereneMix 1.0.0.exe` inside a dedicated empty folder (e.g., `C:\Apps\SereneMix\`) before running it. When executed, it will automatically create a folder named `SereneMix_Data` in the same directory to store your audio files, custom cover art, and configuration data.
+> - **First Launch Delay:** On the very first launch, the application will take a few seconds to create the data folder and migrate the default sounds. Please wait patiently for a few seconds for the setup to complete. 
+> - **Portability:** If you want to carry your custom sounds and configurations to another computer, simply copy both the `.exe` file and its adjacent `SereneMix_Data` folder together.
 
 ---
 
