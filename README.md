@@ -79,22 +79,8 @@ Tam Taşınabilirlik (Portable): Tüm sesleriniz, özel kapak görselleriniz ve 
 
 Masaüstü Kısayolu: Kolay erişim sağlamak için klasör içindeki SereneMix.exe dosyasına sağ tıklayıp masaüstünüze bir kısayol oluşturabilirsiniz.
 
-## Proje Yapısı 📁
-
-```text
-SereneMix/
-  ├── package.json        # Derleme yapılandırması ve bağımlılıklar
-  ├── main.js             # Electron ana süreci (Sistem tepsisi, pencere yönetimi, IPC, dosya izleyici)
-  ├── preload.js          # Electron güvenli IPC köprüsü
-  ├── app_icon.png        # Yüksek çözünürlüklü 256x256 uygulama logosu
-  ├── tray_icon.png       # 32x32 şeffaf sistem tepsisi simgesi
-  └── renderer/           # Ön yüz varlıkları
-      ├── index.html      # Arayüz iskeleti
-      ├── styles.css      # Özelleştirilmiş glassmorphic CSS stilleri
-      └── app.js          # Oynatma mantığı, zamanlayıcı, durum yönetimi ve kullanıcı etkileşimleri
----
-
-Kullanılan Teknolojiler 💻
+	  
+	## Kullanılan Teknolojiler 💻
 Electron (v31.0.0)
 
 Node.js (Yerleşik fs modülü ve dizin izleme)
