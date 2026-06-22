@@ -56,7 +56,7 @@ Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
    cd SereneMix
    ```
 2. Place your ambient sound files in the target directory:
-   `C:\Users\MAXIMUS\PROJECTS\Huzur_Sesleri`
+   `C:\Users\MAXIMUS\PROJECTS\SereneMixSound`
    *(Or modify `main.js` to change the `SOUNDS_DIR` path to your preference)*.
 3. Install dependencies:
    ```bash

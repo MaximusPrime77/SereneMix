@@ -9,7 +9,7 @@ const EXE_DIR = process.env.PORTABLE_EXECUTABLE_DIR || path.dirname(process.exec
 
 const SOUNDS_DIR = isPackaged
   ? path.join(EXE_DIR, 'SereneMix_Data')
-  : path.resolve('C:/Users/MAXIMUS/PROJECTS/Huzur_Sesleri');
+  : path.resolve('C:/Users/MAXIMUS/PROJECTS/SereneMixSound');
 
 const METADATA_PATH = path.join(SOUNDS_DIR, 'metadata.json');
 const COVERS_DIR = path.join(SOUNDS_DIR, 'covers');
@@ -61,7 +61,7 @@ function checkAndMigrateSounds() {
       const tempExtraDir = path.join(path.dirname(process.execPath), 'SereneMix_Data');
       
       // Candidate 2: Dev local directory (fallback)
-      const devDir = 'C:/Users/MAXIMUS/PROJECTS/Huzur_Sesleri';
+      const devDir = 'C:/Users/MAXIMUS/PROJECTS/SereneMixSound';
       
       let sourceDir = null;
       
