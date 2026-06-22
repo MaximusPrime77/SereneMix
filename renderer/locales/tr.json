@@ -42,6 +42,7 @@
   "version": "Sürüm: 1.0.0",
   "developer": "Geliştirici: Maximus Decimus Meridius",
   "run_at_startup": "Windows Başlangıcında Çalıştır",
+  "language": "Dil",
   "close": "Kapat",
   "loading_sounds": "Sesler yükleniyor...",
   "load_error": "Sesler yüklenirken bir hata oluştu:",
