@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initWindowControls();
   loadSounds();
   loadSavedMixes();
+  loadSettings();
   initEventListeners();
 });
 
@@ -62,6 +63,19 @@ function initWindowControls() {
   btnMinimize.addEventListener('click', () => window.api.minimize());
   btnMaximize.addEventListener('click', () => window.api.maximize());
   btnClose.addEventListener('click', () => window.api.close());
+}
+
+// Load Application Settings (Startup setting)
+async function loadSettings() {
+  try {
+    const openAtLogin = await window.api.getStartupSettings();
+    const chkStartup = document.getElementById('chk-startup');
+    if (chkStartup) {
+      chkStartup.checked = openAtLogin;
+    }
+  } catch (err) {
+    console.error('Başlangıç ayarı yüklenemedi:', err);
+  }
 }
 
 // Load Sounds from Local Storage/Folder
@@ -366,6 +380,21 @@ function initEventListeners() {
 
   btnSaveModal.addEventListener('click', saveEditDetails);
   btnSelectCover.addEventListener('click', uploadCoverImage);
+
+  // Startup configuration change
+  const chkStartup = document.getElementById('chk-startup');
+  if (chkStartup) {
+    chkStartup.addEventListener('change', async (e) => {
+      try {
+        const isChecked = e.target.checked;
+        await window.api.setStartupSettings(isChecked);
+      } catch (err) {
+        console.error('Başlangıç ayarı kaydedilemedi:', err);
+        alert('Başlangıç ayarı değiştirilemedi.');
+        e.target.checked = !e.target.checked;
+      }
+    });
+  }
 
   // About Modal triggers
   const aboutModal = document.getElementById('about-modal');

@@ -4,7 +4,13 @@ const fs = require('fs');
 
 let mainWindow;
 let appTray;
-const SOUNDS_DIR = path.resolve('C:/Users/MAXIMUS/PROJECTS/Huzur_Sesleri');
+const isPackaged = app.isPackaged;
+const EXE_DIR = path.dirname(process.execPath);
+
+const SOUNDS_DIR = isPackaged
+  ? path.join(EXE_DIR, 'SereneMix_Data')
+  : path.resolve('C:/Users/MAXIMUS/PROJECTS/Huzur_Sesleri');
+
 const METADATA_PATH = path.join(SOUNDS_DIR, 'metadata.json');
 const COVERS_DIR = path.join(SOUNDS_DIR, 'covers');
 
@@ -299,6 +305,19 @@ ipcMain.on('open-folder', () => {
 
 ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url);
+});
+
+// Startup login settings
+ipcMain.handle('get-startup-settings', () => {
+  return app.getLoginItemSettings().openAtLogin;
+});
+
+ipcMain.handle('set-startup-settings', (event, openAtLogin) => {
+  app.setLoginItemSettings({
+    openAtLogin: openAtLogin,
+    path: app.getPath('exe')
+  });
+  return { success: true };
 });
 
 const gradients = [

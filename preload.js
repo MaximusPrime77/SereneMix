@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('api', {
   addCover: (soundFilename) => ipcRenderer.invoke('add-cover-dialog', soundFilename),
   openFolder: () => ipcRenderer.send('open-folder'),
   openExternal: (url) => ipcRenderer.send('open-external', url),
+  getStartupSettings: () => ipcRenderer.invoke('get-startup-settings'),
+  setStartupSettings: (openAtLogin) => ipcRenderer.invoke('set-startup-settings', openAtLogin),
   getSoundUrl: (filename) => ipcRenderer.invoke('get-sound-url', filename),
   
   // Window controls
