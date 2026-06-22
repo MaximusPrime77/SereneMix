@@ -84,5 +84,6 @@
   "sound_deniz_alti": "Underwater",
   "sound_gurleyen_selale": "Roaring Waterfall",
   "sound_beyaz_gurultu": "White Noise",
-  "sound_uguldayan_ruzgar": "Windy Breeze"
+  "sound_uguldayan_ruzgar": "Windy Breeze",
+  "active_sounds_title": "Active Sounds"
 }

@@ -110,14 +110,10 @@ function createWindow() {
       contextIsolation: true,
       webSecurity: false // Necessary to play local sound files
     },
-    show: false
+    show: true // Show immediately for faster perceived startup
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-  });
 
   mainWindow.on('maximize', () => {
     mainWindow.webContents.send('window-state-changed', 'maximized');
@@ -176,7 +172,7 @@ function createTray() {
 
   appTray.setToolTip('SereneMix');
 
-  appTray.on('double-click', () => {
+  appTray.on('click', () => {
     toggleWindow();
   });
 }
@@ -195,10 +191,14 @@ function toggleWindow() {
 
 // App lifecycle
 app.whenReady().then(() => {
-  checkAndMigrateSounds();
   createWindow();
   createTray();
   startWatcher();
+  
+  // Run migration asynchronously to prevent blocking window creation
+  setTimeout(() => {
+    checkAndMigrateSounds();
+  }, 50);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

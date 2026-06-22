@@ -19,6 +19,9 @@ const btnMinimize = document.getElementById('btn-minimize');
 const btnMaximize = document.getElementById('btn-maximize');
 const btnClose = document.getElementById('btn-close');
 const btnGlobalPlay = document.getElementById('btn-global-play');
+const activeSoundsBar = document.getElementById('active-sounds-bar');
+const activeSoundsList = document.getElementById('active-sounds-list');
+const btnClearAllActive = document.getElementById('btn-clear-all-active');
 
 // Custom Select Dropdown Elements
 const timerSelectContainer = document.getElementById('custom-timer-select');
@@ -116,6 +119,7 @@ async function loadLanguage(lang) {
     updateGlobalPlayButtonState();
     loadSavedMixes();
     renderSoundsGrid(); // Refresh names and categories instantly
+    updateActiveSoundsPanel();
 
     // Also update maximize button title translation if maximized
     const btnMaximize = document.getElementById('btn-maximize');
@@ -221,7 +225,9 @@ function renderSoundsGrid() {
   soundsGrid.innerHTML = '';
   filtered.forEach(sound => {
     const card = document.createElement('div');
-    card.className = `sound-card ${activeAudio[sound.filename] ? 'active' : ''}`;
+    const isActive = activeAudio[sound.filename] !== undefined;
+    const isPaused = isActive && activeAudio[sound.filename].paused;
+    card.className = `sound-card ${isActive ? 'active' : ''} ${isPaused ? 'paused' : ''}`;
     card.dataset.filename = sound.filename;
 
     // Cover art setup
@@ -250,7 +256,7 @@ function renderSoundsGrid() {
       <div class="cover-container" style="${coverStyle}" onclick="toggleSound('${sound.filename}')">
         <div class="cover-overlay">
           <button class="play-icon-btn">
-            ${activeAudio[sound.filename] ? 
+            ${isActive && !isPaused ? 
               `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>` : 
               `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`
             }
@@ -287,8 +293,17 @@ async function toggleSound(filename) {
   if (!sound) return;
 
   if (activeAudio[filename]) {
-    activeAudio[filename].pause();
-    delete activeAudio[filename];
+    if (activeAudio[filename].paused) {
+      try {
+        await activeAudio[filename].play();
+      } catch (err) {
+        console.error(translations['alert_audio_error_log'] || 'Ses oynatılamadı:', err);
+        alert(translations['alert_audio_error'] || 'Ses dosyası çalınamadı. Dosyanın mevcut olduğundan emin olun.');
+        return;
+      }
+    } else {
+      activeAudio[filename].pause();
+    }
   } else {
     const filePath = `file:///${sound.filePath.replace(/\\/g, '/')}`;
     const audio = new Audio(filePath);
@@ -307,6 +322,7 @@ async function toggleSound(filename) {
 
   updateGlobalPlayButtonState();
   renderSoundsGrid();
+  updateActiveSoundsPanel();
 }
 
 // Volume Control
@@ -319,13 +335,20 @@ function changeSoundVolume(filename, volume) {
       activeAudio[filename].volume = sound.volume;
     }
     
+    // Sync slider elements in both grid and active panel
+    const gridSlider = document.querySelector(`.sound-card[data-filename="${filename}"] .volume-slider`);
+    if (gridSlider) gridSlider.value = volume;
+    
+    const activeSlider = document.querySelector(`.active-sound-item[data-filename="${filename}"] .active-sound-slider`);
+    if (activeSlider) activeSlider.value = volume;
+    
     window.api.saveSoundMetadata(filename, { volume: sound.volume });
   }
 }
 
 // Global controls
 function updateGlobalPlayButtonState() {
-  const playingCount = Object.keys(activeAudio).length;
+  const playingCount = Object.values(activeAudio).filter(audio => !audio.paused).length;
   isGlobalPlaying = playingCount > 0;
 
   const btnText = btnGlobalPlay.querySelector('span');
@@ -353,6 +376,7 @@ function stopAllSounds() {
   });
   updateGlobalPlayButtonState();
   renderSoundsGrid();
+  updateActiveSoundsPanel();
 }
 
 // Event Listeners
@@ -369,6 +393,11 @@ function initEventListeners() {
         }
       }
     }
+  });
+
+  // Clear all active sounds from active bar
+  btnClearAllActive.addEventListener('click', () => {
+    stopAllSounds();
   });
 
   // Search input
@@ -795,5 +824,79 @@ async function confirmDeleteSound(filename) {
       alert(`Silme başarısız: ${response.error}`);
     }
   }
+}
+
+// Remove sound from active list completely
+function removeActiveSound(filename) {
+  if (activeAudio[filename]) {
+    activeAudio[filename].pause();
+    delete activeAudio[filename];
+  }
+  updateGlobalPlayButtonState();
+  renderSoundsGrid();
+  updateActiveSoundsPanel();
+}
+
+// Update Active Sounds Panel (Ambie-like)
+function updateActiveSoundsPanel() {
+  const activeKeys = Object.keys(activeAudio);
+  
+  if (activeKeys.length === 0) {
+    activeSoundsBar.classList.add('hidden');
+    return;
+  }
+  
+  activeSoundsBar.classList.remove('hidden');
+  activeSoundsList.innerHTML = '';
+  
+  activeKeys.forEach(filename => {
+    const sound = sounds.find(s => s.filename === filename);
+    if (!sound) return;
+    
+    const audio = activeAudio[filename];
+    const isPaused = audio.paused;
+    
+    const item = document.createElement('div');
+    item.className = `active-sound-item ${isPaused ? 'paused' : ''}`;
+    item.dataset.filename = filename;
+    
+    // Cover art / color gradient
+    let coverStyle = '';
+    if (sound.cover) {
+      const coverUrl = `file:///${sound.filePath.replace(/\\/g, '/').replace(sound.filename, '')}${sound.cover.replace(/\\/g, '/')}`;
+      coverStyle = `background-image: url('${encodeURI(coverUrl)}');`;
+    } else {
+      coverStyle = `background: ${sound.color};`;
+    }
+    
+    // Translate sound title dynamically
+    const titleKey = `sound_${sound.filename.replace(/\.[^/.]+$/, "")}`;
+    const translatedTitle = translations[titleKey] || sound.title;
+    
+    item.innerHTML = `
+      <div class="active-sound-cover" style="${coverStyle}"></div>
+      <div class="active-sound-info">
+        <span class="active-sound-name" title="${translatedTitle}">${translatedTitle}</span>
+        <div class="active-sound-controls">
+          <div class="active-sound-slider-container">
+            <input type="range" class="active-sound-slider" min="0" max="1" step="0.01" value="${sound.volume}" oninput="changeSoundVolume('${filename}', this.value)">
+          </div>
+          <!-- Play / Pause action -->
+          <button class="btn-active-sound-action play-pause" onclick="toggleSound('${filename}')" title="${isPaused ? (translations['play_all'] || 'Çal') : (translations['stop_all'] || 'Durdur')}">
+            ${isPaused ? 
+              `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>` : 
+              `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`
+            }
+          </button>
+          <!-- Remove action -->
+          <button class="btn-active-sound-action remove" onclick="removeActiveSound('${filename}')" title="${translations['delete'] || 'Kaldır'}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+    
+    activeSoundsList.appendChild(item);
+  });
 }
 

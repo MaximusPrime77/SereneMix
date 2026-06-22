@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SereneMix</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- Google Fonts: Outfit -->
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Outfit (Asynchronous Load for Startup Performance) -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"></noscript>
 </head>
 <body>
   <!-- Premium Custom Titlebar -->
@@ -149,6 +150,20 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
         </div>
       </header>
+
+      <!-- Active Sounds Bar (Ambie-like) -->
+      <div id="active-sounds-bar" class="active-sounds-bar hidden">
+        <div class="active-sounds-title-row">
+          <span class="active-sounds-title" data-i18n="active_sounds_title">Active Sounds</span>
+          <button id="btn-clear-all-active" class="btn-clear-all-active">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <span data-i18n="stop_all">Stop All</span>
+          </button>
+        </div>
+        <div id="active-sounds-list" class="active-sounds-list">
+          <!-- Active sound items will be rendered dynamically -->
+        </div>
+      </div>
 
       <!-- Sounds Grid -->
       <div id="sounds-grid" class="sounds-grid">
