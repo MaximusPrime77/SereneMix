@@ -16,7 +16,7 @@
 
 <br>
 
-**SereneMix** is a lightweight, premium-looking, and borderless ambient sound mixer application for the Windows Desktop. Inspired by Microsoft Store's Ambie app, it allows you to play multiple relaxing sounds simultaneously, adjust their individual volume levels, save custom mixes, set a sleep timer, and customize titles and cover art.
+**SereneMix** is a lid by Microsoft Store's Ambie app, it allows you to play multiple relaxing sounds simultaneously, adjust their individual volume levels, save custom mixes, set a sleep timer, and customize titles and cover art.
 
 It features a real-time directory watcher, allowing you to drop new audio files (.mp3, .wav, .ogg, .flac, .m4a) directly into your local sounds folder and listen to them instantly without restarting the app.
 
