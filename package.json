@@ -19,7 +19,7 @@
   "author": "Maximus Decimus Meridius",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^31.0.0",
+    "electron": "^33.4.11",
     "electron-builder": "^24.13.3"
   },
   "build": {

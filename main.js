@@ -16,9 +16,31 @@ let normalBounds = null;
 const isPackaged = app.isPackaged;
 const EXE_DIR = process.env.PORTABLE_EXECUTABLE_DIR || path.dirname(process.execPath);
 
-const SOUNDS_DIR = isPackaged
-  ? path.join(EXE_DIR, 'PrimeMix_Data')
-  : path.resolve(__dirname, '..', 'PrimeMixSound');
+function getSoundsDir() {
+  const possiblePaths = [
+    path.resolve(EXE_DIR, '..', 'PrimeMixSound'),
+    path.resolve(EXE_DIR, '..', 'PrimeMix_Data'),
+    path.resolve(__dirname, '..', 'PrimeMixSound'),
+    path.resolve(__dirname, '..', 'PrimeMix_Data'),
+    path.join(EXE_DIR, 'PrimeMix_Data'),
+    path.join(EXE_DIR, 'PrimeMixSound')
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.flac'];
+      try {
+        const files = fs.readdirSync(p);
+        if (files.some(f => audioExtensions.includes(path.extname(f).toLowerCase()))) {
+          return p;
+        }
+      } catch (e) {}
+    }
+  }
+  return path.resolve(EXE_DIR, '..', 'PrimeMixSound');
+}
+
+const SOUNDS_DIR = getSoundsDir();
 
 const METADATA_PATH = path.join(SOUNDS_DIR, 'metadata.json');
 const COVERS_DIR = path.join(SOUNDS_DIR, 'covers');
