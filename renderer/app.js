@@ -1,4 +1,4 @@
-// SereneMix - Frontend Logic with i18n support
+// PrimeMix - Frontend Logic with i18n support, Audio limits & Crossfading
 
 // State Management
 let sounds = [];
@@ -11,7 +11,7 @@ let sleepTimeRemaining = 0; // seconds
 let selectedSoundForEdit = null;
 
 // Multi-language State
-let currentLanguage = localStorage.getItem('serenemix_lang') || 'en';
+let currentLanguage = localStorage.getItem('primemix_lang') || localStorage.getItem('serenemix_lang') || 'en';
 let translations = {};
 
 // DOM Elements
@@ -67,6 +67,64 @@ const catKeyMap = {
   'Genel': 'cat_other'
 };
 
+// Toast & Notification Utilities
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function showConfirm(message, onConfirm) {
+  const confirmModal = document.getElementById('confirm-modal');
+  const confirmMessage = document.getElementById('confirm-modal-message');
+  const btnOk = document.getElementById('btn-confirm-ok');
+  const btnCancel = document.getElementById('btn-confirm-cancel');
+
+  if (!confirmModal) {
+    if (confirm(message)) onConfirm();
+    return;
+  }
+
+  confirmMessage.textContent = message;
+  confirmModal.classList.remove('hidden');
+
+  const handleOk = () => {
+    cleanup();
+    onConfirm();
+  };
+  const handleCancel = () => {
+    cleanup();
+  };
+  const cleanup = () => {
+    confirmModal.classList.add('hidden');
+    btnOk.removeEventListener('click', handleOk);
+    btnCancel.removeEventListener('click', handleCancel);
+  };
+
+  btnOk.addEventListener('click', handleOk);
+  btnCancel.addEventListener('click', handleCancel);
+}
+
+// Media URL Helper (Uses secure media:// protocol)
+function getMediaUrl(filePath) {
+  if (!filePath) return '';
+  const cleanPath = filePath.replace(/\\/g, '/');
+  return `media://${cleanPath}`;
+}
+
+// Active playing count helper (Max 3 constraint)
+function getActivePlayingCount() {
+  return Object.values(activeAudio).filter(audio => !audio.paused).length;
+}
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', async () => {
   initWindowControls();
@@ -80,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Load Translation Files
 async function loadLanguage(lang) {
   currentLanguage = lang;
-  localStorage.setItem('serenemix_lang', lang);
+  localStorage.setItem('primemix_lang', lang);
 
   try {
     const response = await fetch(`./locales/${lang}.json`);
@@ -95,7 +153,6 @@ async function loadLanguage(lang) {
         } else if (el.tagName === 'OPTION') {
           el.textContent = translations[key];
         } else {
-          // Replace only the text node inside elements (retaining internal SVGs or icons)
           const textNode = Array.from(el.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
           if (textNode) {
             textNode.textContent = translations[key];
@@ -106,25 +163,21 @@ async function loadLanguage(lang) {
       }
     });
 
-    // Update Lang toggle button display
     const btnLangToggle = document.getElementById('btn-lang-toggle');
     if (btnLangToggle) {
       btnLangToggle.textContent = lang.toUpperCase();
     }
 
-    // Update Tray menu dynamically
     window.api.setLanguage(lang);
 
-    // Refresh UI elements
     updateGlobalPlayButtonState();
     loadSavedMixes();
-    renderSoundsGrid(); // Refresh names and categories instantly
+    renderSoundsGrid();
     updateActiveSoundsPanel();
 
-    // Also update maximize button title translation if maximized
     const btnMaximize = document.getElementById('btn-maximize');
     if (btnMaximize) {
-      const isMaximized = btnMaximize.innerHTML.includes('rect x="1.5" y="3.5"'); // check if using restore icon
+      const isMaximized = btnMaximize.innerHTML.includes('rect x="1.5" y="3.5"');
       if (isMaximized) {
         btnMaximize.title = lang === 'tr' ? 'Aşağı Getir' : 'Restore';
       } else {
@@ -142,7 +195,6 @@ function initWindowControls() {
   btnMaximize.addEventListener('click', () => window.api.maximize());
   btnClose.addEventListener('click', () => window.api.close());
 
-  // Synchronize maximize button icon with window state changes (maximize/restore)
   window.api.onWindowStateChanged((state) => {
     if (state === 'maximized') {
       btnMaximize.innerHTML = `<svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="3.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 3.5V1.5H8.5V6.5H6.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>`;
@@ -154,7 +206,7 @@ function initWindowControls() {
   });
 }
 
-// Load Application Settings (Startup setting)
+// Load Application Settings
 async function loadSettings() {
   try {
     const openAtLogin = await window.api.getStartupSettings();
@@ -180,7 +232,6 @@ async function loadSounds(silent = false) {
 
   const response = await window.api.getSounds();
   if (response.success) {
-    // If sounds are playing but deleted, stop them
     Object.keys(activeAudio).forEach(filename => {
       const stillExists = response.sounds.some(s => s.filename === filename);
       if (!stillExists) {
@@ -206,7 +257,6 @@ async function loadSounds(silent = false) {
 // Render Grid
 function renderSoundsGrid() {
   const filtered = sounds.filter(sound => {
-    // Check if the tab filtering matches
     const matchesCategory = currentCategory === 'all' || sound.category === currentCategory;
     const matchesSearch = sound.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           sound.filename.toLowerCase().includes(searchQuery.toLowerCase());
@@ -230,20 +280,18 @@ function renderSoundsGrid() {
     card.className = `sound-card ${isActive ? 'active' : ''} ${isPaused ? 'paused' : ''}`;
     card.dataset.filename = sound.filename;
 
-    // Cover art setup
     let coverStyle = '';
     if (sound.cover) {
-      const coverUrl = `file:///${sound.filePath.replace(/\\/g, '/').replace(sound.filename, '')}${sound.cover.replace(/\\/g, '/')}`;
-      coverStyle = `background-image: url('${encodeURI(coverUrl)}');`;
+      const folderPath = sound.filePath.substring(0, sound.filePath.lastIndexOf(sound.filename.replace(/\//g, '\\')));
+      const fullCoverPath = `${sound.filePath.replace(sound.filename, '')}${sound.cover}`;
+      const mediaUrl = getMediaUrl(fullCoverPath);
+      coverStyle = `background-image: url('${encodeURI(mediaUrl)}');`;
     } else {
       coverStyle = `background: ${sound.color};`;
     }
 
-    // Translate category dynamically on sound card display
     const transKey = catKeyMap[sound.category] || 'cat_other';
     const translatedCategory = translations[transKey] || sound.category;
-
-    // Translate sound title dynamically if key exists
     const titleKey = `sound_${sound.filename.replace(/\.[^/.]+$/, "")}`;
     const translatedTitle = translations[titleKey] || sound.title;
 
@@ -287,35 +335,93 @@ function renderSoundsGrid() {
   });
 }
 
-// Toggle Sound Play/Pause
+// Fade Helpers for Smooth Audio Crossfading
+function fadeInAudio(audio, targetVol, duration = 300) {
+  audio.volume = 0;
+  const steps = 15;
+  const stepTime = duration / steps;
+  const volStep = targetVol / steps;
+  let currentStep = 0;
+
+  const timer = setInterval(() => {
+    currentStep++;
+    audio.volume = Math.min(targetVol, audio.volume + volStep);
+    if (currentStep >= steps) {
+      audio.volume = targetVol;
+      clearInterval(timer);
+    }
+  }, stepTime);
+}
+
+function fadeOutAudio(audio, onComplete, duration = 250) {
+  const initialVol = audio.volume;
+  if (initialVol <= 0) {
+    if (onComplete) onComplete();
+    return;
+  }
+  const steps = 15;
+  const stepTime = duration / steps;
+  const volStep = initialVol / steps;
+  let currentStep = 0;
+
+  const timer = setInterval(() => {
+    currentStep++;
+    audio.volume = Math.max(0, audio.volume - volStep);
+    if (currentStep >= steps) {
+      audio.volume = 0;
+      clearInterval(timer);
+      if (onComplete) onComplete();
+    }
+  }, stepTime);
+}
+
+// Toggle Sound Play/Pause with Max 3 constraint & Fade-in/out
 async function toggleSound(filename) {
   const sound = sounds.find(s => s.filename === filename);
   if (!sound) return;
 
-  if (activeAudio[filename]) {
-    if (activeAudio[filename].paused) {
+  const isCurrentlyActive = activeAudio[filename] !== undefined;
+  const isCurrentlyPaused = isCurrentlyActive && activeAudio[filename].paused;
+
+  // Check Max 3 sounds constraint before playing
+  if (!isCurrentlyActive || isCurrentlyPaused) {
+    if (getActivePlayingCount() >= 3) {
+      showToast(translations['alert_max_sounds'] || 'Aynı anda en fazla 3 ses çalınabilir.', 'warning');
+      return;
+    }
+  }
+
+  if (isCurrentlyActive) {
+    if (isCurrentlyPaused) {
       try {
         await activeAudio[filename].play();
+        fadeInAudio(activeAudio[filename], sound.volume);
       } catch (err) {
         console.error(translations['alert_audio_error_log'] || 'Ses oynatılamadı:', err);
-        alert(translations['alert_audio_error'] || 'Ses dosyası çalınamadı. Dosyanın mevcut olduğundan emin olun.');
+        showToast(translations['alert_audio_error'] || 'Ses dosyası çalınamadı.', 'error');
         return;
       }
     } else {
-      activeAudio[filename].pause();
+      fadeOutAudio(activeAudio[filename], () => {
+        activeAudio[filename].pause();
+        updateGlobalPlayButtonState();
+        renderSoundsGrid();
+        updateActiveSoundsPanel();
+      });
+      return;
     }
   } else {
-    const filePath = `file:///${sound.filePath.replace(/\\/g, '/')}`;
-    const audio = new Audio(filePath);
+    const mediaUrl = getMediaUrl(sound.filePath);
+    const audio = new Audio(mediaUrl);
     audio.loop = true;
-    audio.volume = sound.volume;
     
     try {
       await audio.play();
       activeAudio[filename] = audio;
+      fadeInAudio(audio, sound.volume);
     } catch (err) {
       console.error(translations['alert_audio_error_log'] || 'Ses oynatılamadı:', err);
-      alert(translations['alert_audio_error'] || 'Ses dosyası çalınamadı. Dosyanın mevcut olduğundan emin olun.');
+      showToast(translations['alert_audio_error'] || 'Ses dosyası çalınamadı.', 'error');
       return;
     }
   }
@@ -335,7 +441,6 @@ function changeSoundVolume(filename, volume) {
       activeAudio[filename].volume = sound.volume;
     }
     
-    // Sync slider elements in both grid and active panel
     const gridSlider = document.querySelector(`.sound-card[data-filename="${filename}"] .volume-slider`);
     if (gridSlider) gridSlider.value = volume;
     
@@ -348,7 +453,7 @@ function changeSoundVolume(filename, volume) {
 
 // Global controls
 function updateGlobalPlayButtonState() {
-  const playingCount = Object.values(activeAudio).filter(audio => !audio.paused).length;
+  const playingCount = getActivePlayingCount();
   isGlobalPlaying = playingCount > 0;
 
   const btnText = btnGlobalPlay.querySelector('span');
@@ -368,45 +473,45 @@ function updateGlobalPlayButtonState() {
   }
 }
 
-// Stop all sounds
+// Stop all sounds with smooth fade out
 function stopAllSounds() {
   Object.keys(activeAudio).forEach(filename => {
-    activeAudio[filename].pause();
-    delete activeAudio[filename];
+    const audio = activeAudio[filename];
+    fadeOutAudio(audio, () => {
+      audio.pause();
+      delete activeAudio[filename];
+      updateGlobalPlayButtonState();
+      renderSoundsGrid();
+      updateActiveSoundsPanel();
+    });
   });
-  updateGlobalPlayButtonState();
-  renderSoundsGrid();
-  updateActiveSoundsPanel();
 }
 
 // Event Listeners
 function initEventListeners() {
-  // Global Play/Pause
+  // Global Play/Pause (Max 3 Limit)
   btnGlobalPlay.addEventListener('click', () => {
     if (isGlobalPlaying) {
       stopAllSounds();
     } else {
       const limit = Math.min(sounds.length, 3);
       for (let i = 0; i < limit; i++) {
-        if (!activeAudio[sounds[i].filename]) {
+        if (!activeAudio[sounds[i].filename] || activeAudio[sounds[i].filename].paused) {
           toggleSound(sounds[i].filename);
         }
       }
     }
   });
 
-  // Clear all active sounds from active bar
   btnClearAllActive.addEventListener('click', () => {
     stopAllSounds();
   });
 
-  // Search input
   searchInput.addEventListener('input', (e) => {
     searchQuery = e.target.value;
     renderSoundsGrid();
   });
 
-  // Category filtering
   categoryTabs.forEach(tab => {
     tab.addEventListener('click', (e) => {
       categoryTabs.forEach(t => t.classList.remove('active'));
@@ -416,20 +521,18 @@ function initEventListeners() {
     });
   });
 
-  // Open folder
   btnOpenFolder.addEventListener('click', () => window.api.openFolder());
 
-  // Add sound
   btnAddSound.addEventListener('click', async () => {
     const result = await window.api.addSound();
     if (result.success) {
       await loadSounds();
+      showToast('Yeni ses başarıyla eklendi.', 'info');
     } else if (result.error) {
-      alert(`Ses eklenirken hata oluştu: ${result.error}`);
+      showToast(`Ses eklenirken hata oluştu: ${result.error}`, 'error');
     }
   });
 
-  // Custom Dropdown Trigger Click
   timerDropdownTrigger.addEventListener('click', (e) => {
     e.stopPropagation();
     const isOpen = timerSelectContainer.classList.contains('open');
@@ -441,23 +544,18 @@ function initEventListeners() {
     }
   });
 
-  // Custom Options Click
   customOptions.forEach(option => {
     option.addEventListener('click', (e) => {
       e.stopPropagation();
       const val = parseInt(option.dataset.value);
       const text = option.textContent;
 
-      // Update active option styling
       customOptions.forEach(opt => opt.classList.remove('active'));
       option.classList.add('active');
 
-      // Update trigger visual text
       timerTriggerText.textContent = text;
-
       closeCustomDropdown();
 
-      // Timer trigger logic
       if (val > 0) {
         startSleepTimer(val);
       } else {
@@ -466,21 +564,18 @@ function initEventListeners() {
     });
   });
 
-  // Close dropdown on clicking outside
   document.addEventListener('click', () => {
     closeCustomDropdown();
   });
 
-  // Timer Cancel Click
   btnCancelTimer.addEventListener('click', () => {
     cancelSleepTimer();
   });
 
-  // Save Mix triggers
   btnSaveMix.addEventListener('click', () => {
     const activeCount = Object.keys(activeAudio).length;
     if (activeCount === 0) {
-      alert(translations['alert_play_first'] || 'Karışım oluşturmak için lütfen en az bir ses çalın.');
+      showToast(translations['alert_play_first'] || 'Karışım oluşturmak için lütfen en az bir ses çalın.', 'warning');
       return;
     }
     mixNameInput.value = '';
@@ -494,14 +589,16 @@ function initEventListeners() {
   btnConfirmSaveMix.addEventListener('click', () => {
     const name = mixNameInput.value.trim();
     if (!name) {
-      alert(translations['alert_enter_name'] || 'Lütfen karışım için bir isim girin.');
+      showToast(translations['alert_enter_name'] || 'Lütfen karışım için bir isim girin.', 'warning');
       return;
     }
     saveMix(name);
     saveMixModal.classList.add('hidden');
   });
 
-  // Edit modal close
+  editModal.addEventListener('click', (e) => {
+    if (e.target === editModal) editModal.classList.add('hidden');
+  });
   btnCloseModal.addEventListener('click', () => {
     editModal.classList.add('hidden');
   });
@@ -509,7 +606,6 @@ function initEventListeners() {
   btnSaveModal.addEventListener('click', saveEditDetails);
   btnSelectCover.addEventListener('click', uploadCoverImage);
 
-  // Startup configuration change
   const chkStartup = document.getElementById('chk-startup');
   if (chkStartup) {
     chkStartup.addEventListener('change', async (e) => {
@@ -518,13 +614,12 @@ function initEventListeners() {
         await window.api.setStartupSettings(isChecked);
       } catch (err) {
         console.error('Başlangıç ayarı kaydedilemedi:', err);
-        alert('Başlangıç ayarı değiştirilemedi.');
+        showToast('Başlangıç ayarı değiştirilemedi.', 'error');
         e.target.checked = !e.target.checked;
       }
     });
   }
 
-  // Language Toggle Button Trigger
   const btnLangToggle = document.getElementById('btn-lang-toggle');
   if (btnLangToggle) {
     btnLangToggle.addEventListener('click', () => {
@@ -533,7 +628,6 @@ function initEventListeners() {
     });
   }
 
-  // About Modal triggers
   const aboutModal = document.getElementById('about-modal');
   document.getElementById('btn-about').addEventListener('click', () => {
     aboutModal.classList.remove('hidden');
@@ -545,7 +639,7 @@ function initEventListeners() {
 
   document.getElementById('link-github').addEventListener('click', (e) => {
     e.preventDefault();
-    window.api.openExternal('https://github.com/MaximusPrime77');
+    window.api.openExternal('https://github.com/MaximusPrime77/PrimeMix');
   });
 
   document.getElementById('link-email').addEventListener('click', (e) => {
@@ -553,12 +647,10 @@ function initEventListeners() {
     window.api.openExternal('mailto:b.maximus.prime@gmail.com');
   });
 
-  // Listen to Tray stop-all event
   window.api.onStopAllSounds(() => {
     stopAllSounds();
   });
 
-  // Listen to Directory Watcher sounds-changed event (Silent update to keep current playback undisturbed)
   window.api.onSoundsChanged(() => {
     loadSounds(true); 
   });
@@ -592,21 +684,18 @@ function startSleepTimer(minutes) {
   }, 1000);
 }
 
-// Show sleep timer value dynamically
 function updateTimerDisplay() {
   const mins = Math.floor(sleepTimeRemaining / 60);
   const secs = sleepTimeRemaining % 60;
   timerTime.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Reset Sleep Timer widget
 function cancelSleepTimer() {
   if (sleepTimer) {
     clearInterval(sleepTimer);
     sleepTimer = null;
   }
   
-  // Reset trigger display text based on translations
   timerTriggerText.textContent = translations['timer_off'] || "Kapat";
   customOptions.forEach(opt => {
     if (opt.dataset.value === "0") opt.classList.add('active');
@@ -617,44 +706,14 @@ function cancelSleepTimer() {
   timerDisplay.classList.add('hidden');
 }
 
-// Fade Out Volume
 function fadeOutAndStopSounds() {
-  const activeCount = Object.keys(activeAudio).length;
-  if (activeCount === 0) return;
-
-  const fadeInterval = 50; 
-  const fadeDuration = 3000; 
-  const steps = fadeDuration / fadeInterval;
-
-  const audioFaders = [];
-  Object.keys(activeAudio).forEach(filename => {
-    const audio = activeAudio[filename];
-    audioFaders.push({
-      audio: audio,
-      filename: filename,
-      stepVol: audio.volume / steps
-    });
-  });
-
-  let currentStep = 0;
-  const fader = setInterval(() => {
-    currentStep++;
-    audioFaders.forEach(f => {
-      const newVol = Math.max(0, f.audio.volume - f.stepVol);
-      f.audio.volume = newVol;
-    });
-
-    if (currentStep >= steps) {
-      clearInterval(fader);
-      stopAllSounds();
-    }
-  }, fadeInterval);
+  stopAllSounds();
 }
 
 // Saved Mixes Logic
 function loadSavedMixes() {
   mixesList.innerHTML = '';
-  const mixes = JSON.parse(localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
+  const mixes = JSON.parse(localStorage.getItem('primemix_mixes') || localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
   
   if (mixes.length === 0) {
     mixesList.innerHTML = `<p class="empty-text">${translations['no_saved_mixes'] || 'Henüz kayıtlı karışımınız yok.'}</p>`;
@@ -683,7 +742,6 @@ function loadSavedMixes() {
   });
 }
 
-// Save Mix settings
 function saveMix(name) {
   const currentMixSounds = [];
   Object.keys(activeAudio).forEach(filename => {
@@ -699,21 +757,23 @@ function saveMix(name) {
     sounds: currentMixSounds
   };
 
-  const mixes = JSON.parse(localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
+  const mixes = JSON.parse(localStorage.getItem('primemix_mixes') || localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
   mixes.push(newMix);
-  localStorage.setItem('serenemix_mixes', JSON.stringify(mixes));
+  localStorage.setItem('primemix_mixes', JSON.stringify(mixes));
   loadSavedMixes();
+  showToast('Karışım başarıyla kaydedildi.', 'info');
 }
 
-// Apply Saved Mix
 function applyMix(id) {
-  const mixes = JSON.parse(localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
+  const mixes = JSON.parse(localStorage.getItem('primemix_mixes') || localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
   const mix = mixes.find(m => m.id === id);
   if (!mix) return;
 
   stopAllSounds();
 
-  mix.sounds.forEach(s => {
+  // En fazla 3 ses uygulayacak şekilde limitle
+  const limitSounds = mix.sounds.slice(0, 3);
+  limitSounds.forEach(s => {
     const originalSound = sounds.find(orig => orig.filename === s.filename);
     if (originalSound) {
       originalSound.volume = s.volume;
@@ -722,16 +782,14 @@ function applyMix(id) {
   });
 }
 
-// Delete Mix setting
 function deleteMix(id, event) {
   event.stopPropagation();
-  let mixes = JSON.parse(localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
+  let mixes = JSON.parse(localStorage.getItem('primemix_mixes') || localStorage.getItem('serenemix_mixes') || localStorage.getItem('huzur_mixes') || '[]');
   mixes = mixes.filter(m => m.id !== id);
-  localStorage.setItem('serenemix_mixes', JSON.stringify(mixes));
+  localStorage.setItem('primemix_mixes', JSON.stringify(mixes));
   loadSavedMixes();
 }
 
-// Edit Sound Details
 function openEditModal(filename) {
   const sound = sounds.find(s => s.filename === filename);
   if (!sound) return;
@@ -747,8 +805,9 @@ function openEditModal(filename) {
 
 function updateCoverPreview(sound) {
   if (sound.cover) {
-    const coverUrl = `file:///${sound.filePath.replace(/\\/g, '/').replace(sound.filename, '')}${sound.cover.replace(/\\/g, '/')}`;
-    editCoverPreview.style.backgroundImage = `url('${encodeURI(coverUrl)}')`;
+    const fullCoverPath = `${sound.filePath.replace(sound.filename, '')}${sound.cover}`;
+    const mediaUrl = getMediaUrl(fullCoverPath);
+    editCoverPreview.style.backgroundImage = `url('${encodeURI(mediaUrl)}')`;
     editCoverPreview.style.background = '';
   } else {
     editCoverPreview.style.backgroundImage = '';
@@ -756,7 +815,6 @@ function updateCoverPreview(sound) {
   }
 }
 
-// Add cover image from disk
 async function uploadCoverImage() {
   if (!selectedSoundForEdit) return;
   
@@ -765,19 +823,19 @@ async function uploadCoverImage() {
     selectedSoundForEdit.cover = result.coverPath;
     updateCoverPreview(selectedSoundForEdit);
     renderSoundsGrid();
+    showToast('Kapak görseli güncellendi.', 'info');
   } else if (result.error) {
-    alert(`Resim yüklenirken hata oluştu: ${result.error}`);
+    showToast(`Resim yüklenirken hata oluştu: ${result.error}`, 'error');
   }
 }
 
-// Save sound metadata to file
 async function saveEditDetails() {
   const filename = editFilename.value;
   const title = editTitle.value.trim();
   const category = editCategory.value;
 
   if (!title) {
-    alert(translations['alert_enter_title'] || 'Lütfen bir başlık girin.');
+    showToast(translations['alert_enter_title'] || 'Lütfen bir başlık girin.', 'warning');
     return;
   }
 
@@ -795,12 +853,12 @@ async function saveEditDetails() {
     
     editModal.classList.add('hidden');
     renderSoundsGrid();
+    showToast('Ses detayları kaydedildi.', 'info');
   } else {
-    alert(`Kaydedilemedi: ${response.error}`);
+    showToast(`Kaydedilemedi: ${response.error}`, 'error');
   }
 }
 
-// Confirm and delete sound file physically
 async function confirmDeleteSound(filename) {
   const sound = sounds.find(s => s.filename === filename);
   if (!sound) return;
@@ -809,8 +867,7 @@ async function confirmDeleteSound(filename) {
     ? `"${sound.title}" sesini silmek istediğinize emin misiniz?` 
     : `Are you sure you want to delete "${sound.title}"?`;
 
-  if (confirm(confirmMsg)) {
-    // Stop sound if it's currently playing
+  showConfirm(confirmMsg, async () => {
     if (activeAudio[filename]) {
       activeAudio[filename].pause();
       delete activeAudio[filename];
@@ -819,25 +876,27 @@ async function confirmDeleteSound(filename) {
 
     const response = await window.api.deleteSound(filename);
     if (response.success) {
-      await loadSounds(true); // reload grid silently
+      await loadSounds(true);
+      showToast('Ses dosyası silindi.', 'info');
     } else {
-      alert(`Silme başarısız: ${response.error}`);
+      showToast(`Silme başarısız: ${response.error}`, 'error');
     }
-  }
+  });
 }
 
-// Remove sound from active list completely
 function removeActiveSound(filename) {
   if (activeAudio[filename]) {
-    activeAudio[filename].pause();
-    delete activeAudio[filename];
+    const audio = activeAudio[filename];
+    fadeOutAudio(audio, () => {
+      audio.pause();
+      delete activeAudio[filename];
+      updateGlobalPlayButtonState();
+      renderSoundsGrid();
+      updateActiveSoundsPanel();
+    });
   }
-  updateGlobalPlayButtonState();
-  renderSoundsGrid();
-  updateActiveSoundsPanel();
 }
 
-// Update Active Sounds Panel (Ambie-like)
 function updateActiveSoundsPanel() {
   const activeKeys = Object.keys(activeAudio);
   
@@ -860,16 +919,15 @@ function updateActiveSoundsPanel() {
     item.className = `active-sound-item ${isPaused ? 'paused' : ''}`;
     item.dataset.filename = filename;
     
-    // Cover art / color gradient
     let coverStyle = '';
     if (sound.cover) {
-      const coverUrl = `file:///${sound.filePath.replace(/\\/g, '/').replace(sound.filename, '')}${sound.cover.replace(/\\/g, '/')}`;
-      coverStyle = `background-image: url('${encodeURI(coverUrl)}');`;
+      const fullCoverPath = `${sound.filePath.replace(sound.filename, '')}${sound.cover}`;
+      const mediaUrl = getMediaUrl(fullCoverPath);
+      coverStyle = `background-image: url('${encodeURI(mediaUrl)}');`;
     } else {
       coverStyle = `background: ${sound.color};`;
     }
     
-    // Translate sound title dynamically
     const titleKey = `sound_${sound.filename.replace(/\.[^/.]+$/, "")}`;
     const translatedTitle = translations[titleKey] || sound.title;
     
@@ -881,14 +939,12 @@ function updateActiveSoundsPanel() {
           <div class="active-sound-slider-container">
             <input type="range" class="active-sound-slider" min="0" max="1" step="0.01" value="${sound.volume}" oninput="changeSoundVolume('${filename}', this.value)">
           </div>
-          <!-- Play / Pause action -->
           <button class="btn-active-sound-action play-pause" onclick="toggleSound('${filename}')" title="${isPaused ? (translations['play_all'] || 'Çal') : (translations['stop_all'] || 'Durdur')}">
             ${isPaused ? 
               `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>` : 
               `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`
             }
           </button>
-          <!-- Remove action -->
           <button class="btn-active-sound-action remove" onclick="removeActiveSound('${filename}')" title="${translations['delete'] || 'Kaldır'}">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
@@ -899,4 +955,3 @@ function updateActiveSoundsPanel() {
     activeSoundsList.appendChild(item);
   });
 }
-

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SereneMix</title>
+  <title>PrimeMix</title>
   <link rel="stylesheet" href="styles.css">
   <!-- Google Fonts: Outfit (Asynchronous Load for Startup Performance) -->
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -13,8 +13,8 @@
   <!-- Premium Custom Titlebar -->
   <div class="titlebar">
     <div class="titlebar-logo">
-      <img src="app_icon.png" class="titlebar-logo-img" alt="SereneMix">
-      <span>SereneMix</span>
+      <img src="app_icon.png" class="titlebar-logo-img" alt="PrimeMix">
+      <span>PrimeMix</span>
     </div>
     <div class="window-controls">
       <button class="win-btn" id="btn-minimize" title="Minimize">
@@ -263,7 +263,7 @@
         <div class="about-info-list">
           <div class="info-item">
             <span class="info-label">GitHub</span>
-            <a href="#" id="link-github" class="info-value">github.com/MaximusPrime77</a>
+            <a href="#" id="link-github" class="info-value">github.com/MaximusPrime77/PrimeMix</a>
           </div>
           <div class="info-item">
             <span class="info-label">E-Mail</span>
@@ -271,10 +271,29 @@
           </div>
           <div class="info-item">
             <span class="info-label">Version</span>
-            <span class="info-value">v1.0.0 (Premium Portable)</span>
+            <span class="info-value">v1.0.0 (Prime Portable)</span>
           </div>
         </div>
         <p class="about-description" data-i18n="about_desc">This application was developed to create a peaceful and focused environment.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Custom Confirm Modal -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal-card small-card">
+      <div class="modal-header">
+        <h2 id="confirm-modal-title" data-i18n="confirm_title">Onay</h2>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-modal-message">Emin misiniz?</p>
+      </div>
+      <div class="modal-footer split">
+        <button id="btn-confirm-cancel" class="action-btn secondary" data-i18n="cancel">İptal</button>
+        <button id="btn-confirm-ok" class="action-btn danger" data-i18n="delete">Sil</button>
       </div>
     </div>
   </div>

@@ -1,6 +1,12 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, dialog, shell, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, dialog, shell, nativeImage, protocol, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { pathToFileURL } = require('url');
+
+// Register custom protocol scheme before app is ready
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'media', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, bypassCSP: true } }
+]);
 
 let mainWindow;
 let appTray;
@@ -8,7 +14,7 @@ const isPackaged = app.isPackaged;
 const EXE_DIR = process.env.PORTABLE_EXECUTABLE_DIR || path.dirname(process.execPath);
 
 const SOUNDS_DIR = isPackaged
-  ? path.join(EXE_DIR, 'SereneMix_Data')
+  ? path.join(EXE_DIR, 'PrimeMix_Data')
   : path.resolve(__dirname, '..', 'SereneMixSound');
 
 const METADATA_PATH = path.join(SOUNDS_DIR, 'metadata.json');
@@ -55,10 +61,10 @@ async function checkAndMigrateSounds() {
     }
 
     if (!hasAudio) {
-      console.log('SereneMix_Data is empty. Starting sound migration...');
+      console.log('PrimeMix_Data is empty. Starting sound migration...');
       
       // Candidate 1: The unpacked temp directory (extraFiles location for portable target)
-      const tempExtraDir = path.join(path.dirname(process.execPath), 'SereneMix_Data');
+      const tempExtraDir = path.join(path.dirname(process.execPath), 'PrimeMix_Data');
       
       // Candidate 2: Dev local directory (fallback)
       const devDir = path.resolve(__dirname, '..', 'SereneMixSound');
@@ -113,7 +119,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      webSecurity: false // Necessary to play local sound files
+      webSecurity: true // Secured with custom media:// protocol
     },
     show: true // Show immediately for faster perceived startup
   });
@@ -146,7 +152,7 @@ function updateTrayMenu(lang) {
   const exitLabel = isTr ? 'Çıkış' : 'Exit';
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'SereneMix', enabled: false },
+    { label: 'PrimeMix', enabled: false },
     { type: 'separator' },
     { label: showHideLabel, click: () => toggleWindow() },
     { label: stopAllLabel, click: () => {
@@ -167,7 +173,6 @@ function updateTrayMenu(lang) {
 }
 
 function createTray() {
-  // Use app_icon.png directly as it is packaged in ASAR and visible on both light and dark themes
   const iconPath = path.join(__dirname, 'app_icon.png');
   const icon = nativeImage.createFromPath(iconPath);
   appTray = new Tray(icon);
@@ -175,7 +180,7 @@ function createTray() {
   // Default to English on startup
   updateTrayMenu('en');
 
-  appTray.setToolTip('SereneMix');
+  appTray.setToolTip('PrimeMix');
 
   appTray.on('click', () => {
     toggleWindow();
@@ -192,10 +197,18 @@ function toggleWindow() {
   }
 }
 
-// Default icon creation function removed because it causes write errors in packaged ASAR environments
-
 // App lifecycle
 app.whenReady().then(() => {
+  // Setup secure media protocol handler
+  protocol.handle('media', (request) => {
+    let urlPath = request.url.replace(/^media:\/\//, '');
+    if (/^[a-zA-Z]\//.test(urlPath)) {
+      urlPath = urlPath[0] + ':' + urlPath.slice(1);
+    }
+    const decodedPath = decodeURIComponent(urlPath);
+    return net.fetch(pathToFileURL(decodedPath).toString());
+  });
+
   createWindow();
   createTray();
   startWatcher();
@@ -239,24 +252,24 @@ function startWatcher() {
   }
 }
 
-// IPC Communication handlers
+// IPC Communication handlers (Asynchronous & Non-blocking)
 ipcMain.handle('get-sounds', async () => {
   try {
-    // Ensure directories exist right before reading (failsafe)
     if (!fs.existsSync(SOUNDS_DIR)) {
-      fs.mkdirSync(SOUNDS_DIR, { recursive: true });
+      await fs.promises.mkdir(SOUNDS_DIR, { recursive: true });
     }
     if (!fs.existsSync(COVERS_DIR)) {
-      fs.mkdirSync(COVERS_DIR, { recursive: true });
+      await fs.promises.mkdir(COVERS_DIR, { recursive: true });
     }
-    const files = fs.readdirSync(SOUNDS_DIR);
+    const files = await fs.promises.readdir(SOUNDS_DIR);
     const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.flac'];
     
-    // Read metadata
+    // Read metadata asynchronously
     let metadata = {};
     if (fs.existsSync(METADATA_PATH)) {
       try {
-        metadata = JSON.parse(fs.readFileSync(METADATA_PATH, 'utf-8'));
+        const metaContent = await fs.promises.readFile(METADATA_PATH, 'utf-8');
+        metadata = JSON.parse(metaContent);
       } catch (err) {
         console.error('Metadata parsing error:', err);
       }
@@ -291,13 +304,14 @@ ipcMain.handle('get-sounds', async () => {
   }
 });
 
-// Save sound metadata
+// Save sound metadata asynchronously
 ipcMain.handle('save-sound-metadata', async (event, filename, data) => {
   try {
     let metadata = {};
     if (fs.existsSync(METADATA_PATH)) {
       try {
-        metadata = JSON.parse(fs.readFileSync(METADATA_PATH, 'utf-8'));
+        const metaContent = await fs.promises.readFile(METADATA_PATH, 'utf-8');
+        metadata = JSON.parse(metaContent);
       } catch (e) {}
     }
 
@@ -306,44 +320,42 @@ ipcMain.handle('save-sound-metadata', async (event, filename, data) => {
       ...data
     };
 
-    fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
+    await fs.promises.writeFile(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
   }
 });
 
-// Delete sound file physically and clean its metadata
+// Delete sound file physically and clean its metadata asynchronously
 ipcMain.handle('delete-sound', async (event, filename) => {
   try {
     const filePath = path.join(SOUNDS_DIR, filename);
     if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+      await fs.promises.unlink(filePath);
     }
 
-    // Read metadata
     let metadata = {};
     if (fs.existsSync(METADATA_PATH)) {
       try {
-        metadata = JSON.parse(fs.readFileSync(METADATA_PATH, 'utf-8'));
+        const metaContent = await fs.promises.readFile(METADATA_PATH, 'utf-8');
+        metadata = JSON.parse(metaContent);
       } catch (e) {}
     }
 
-    // Delete cover if exists
     if (metadata[filename] && metadata[filename].cover) {
       const coverPath = path.join(SOUNDS_DIR, metadata[filename].cover);
       if (fs.existsSync(coverPath)) {
         try {
-          fs.unlinkSync(coverPath);
+          await fs.promises.unlink(coverPath);
         } catch (e) {
           console.error('Failed to delete cover file:', e);
         }
       }
     }
 
-    // Delete metadata entry
     delete metadata[filename];
-    fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
+    await fs.promises.writeFile(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
 
     return { success: true };
   } catch (error) {
@@ -351,8 +363,7 @@ ipcMain.handle('delete-sound', async (event, filename) => {
   }
 });
 
-
-// Add sound file from dialog
+// Add sound file from dialog asynchronously
 ipcMain.handle('add-sound-dialog', async () => {
   try {
     const result = await dialog.showOpenDialog({
@@ -370,7 +381,7 @@ ipcMain.handle('add-sound-dialog', async () => {
     const filename = path.basename(srcPath);
     const destPath = path.join(SOUNDS_DIR, filename);
 
-    fs.copyFileSync(srcPath, destPath);
+    await fs.promises.copyFile(srcPath, destPath);
 
     return { success: true, filename: filename };
   } catch (error) {
@@ -378,7 +389,7 @@ ipcMain.handle('add-sound-dialog', async () => {
   }
 });
 
-// Add cover image from dialog
+// Add cover image from dialog asynchronously
 ipcMain.handle('add-cover-dialog', async (event, soundFilename) => {
   try {
     const result = await dialog.showOpenDialog({
@@ -397,13 +408,13 @@ ipcMain.handle('add-cover-dialog', async (event, soundFilename) => {
     const coverFilename = `${path.basename(soundFilename, path.extname(soundFilename))}_cover${ext}`;
     const destPath = path.join(COVERS_DIR, coverFilename);
 
-    fs.copyFileSync(srcPath, destPath);
+    await fs.promises.copyFile(srcPath, destPath);
 
-    // Save cover association in metadata
     let metadata = {};
     if (fs.existsSync(METADATA_PATH)) {
       try {
-        metadata = JSON.parse(fs.readFileSync(METADATA_PATH, 'utf-8'));
+        const metaContent = await fs.promises.readFile(METADATA_PATH, 'utf-8');
+        metadata = JSON.parse(metaContent);
       } catch (e) {}
     }
 
@@ -412,7 +423,7 @@ ipcMain.handle('add-cover-dialog', async (event, soundFilename) => {
       cover: `covers/${coverFilename}`
     };
 
-    fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
+    await fs.promises.writeFile(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
 
     return { success: true, coverPath: `covers/${coverFilename}` };
   } catch (error) {
@@ -435,7 +446,7 @@ ipcMain.on('window-maximize', () => {
 });
 
 ipcMain.on('window-close', () => {
-  if (mainWindow) mainWindow.hide(); // Minimize to tray
+  if (mainWindow) mainWindow.hide();
 });
 
 ipcMain.on('open-folder', () => {

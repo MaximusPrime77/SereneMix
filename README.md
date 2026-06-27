@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="app_icon.png" width="128" alt="SereneMix Logo" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
+  <img src="app_icon.png" width="128" alt="PrimeMix Logo" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
 </p>
 
-<h1 align="center">SereneMix</h1>
+<h1 align="center">PrimeMix</h1>
 
 <p align="center">
   <strong>Premium Ambient Sound Mixer for Windows Desktop</strong>
@@ -16,85 +16,113 @@
 
 <br>
 
-**SereneMix**, Microsoft Store'da yer alan Ambie uygulamasından esinlenerek geliştirilmiş, Windows için modern bir ortam sesi mikseridir. Birden fazla rahatlatıcı sesi aynı anda oynatmanıza, ses seviyelerini bağımsız olarak ayarlamanıza, özel miksler kaydetmenize, uyku zamanlayıcısı belirlemenize ve ses kapakları ile başlıklarını özelleştirmenize olanak tanır.
+**PrimeMix** is a premium ambient sound mixer for Windows desktop, inspired by modern relaxing audio applications. It allows you to play up to 3 relaxing sounds simultaneously, adjust individual volume levels with smooth audio crossfading, save custom mixes, set a sleep timer, and customize sound titles and cover art.
 
-Gerçek zamanlı dizin izleyicisi (Directory Watcher) sayesinde, yeni ses dosyalarınızı (`.mp3`, `.wav`, `.ogg`, `.flac`, `.m4a`) uygulamayı yeniden başlatmaya gerek kalmadan doğrudan yerel ses klasörünüze sürükleyip bırakarak anında dinleyebilirsiniz.
-
----
-
-## Öne Çıkan Özellikler 🚀
-
-- **Eşzamanlı Ses Oynatma**: Mükemmel ambiyansınızı yaratmak için birden fazla doğa veya beyaz gürültü sesini aynı anda dinleyin.
-- **Sistem Tepsisi (Tray) Entegrasyonu**: SereneMix arka planda çalışmaya ve sesleri oynatmaya devam etmek için sistem tepsisine küçülür. Tepsi simgesine sağ tıklayarak tüm sesleri oynatabilir, durdurabilir veya uygulamadan çıkabilirsiniz.
-- **Dinamik Çoklu Dil Desteği (EN/TR)**: İngilizce ve Türkçe dilleri arasında anında geçiş yapın. Arayüz, ayarlar, ses adları/kategorileri ve sistem tepsisi menüsü seçilen dille anlık olarak senkronize olur.
-- **Premium Glassmorphism Arayüzü**: Tamamen çerçevesiz pencere yapısı, tam ekran/pencere boyutu için çift tıklama destekli özel başlık çubuğu, akıcı animasyonlar, dinamik CSS gradyanları ve ekolayzır dalga görselleştirmeleri.
-- **Gerçek Zamanlı Klasör Senkronizasyonu**: Ses dosyalarınızı yapılandırılan klasöre eklediğiniz an, uygulamayı kapatıp açmaya gerek kalmadan arayüzdeki ızgarada listelenir.
-- **Uyku Zamanlayıcısı (Fade-out)**: 15 dakikadan 2 saate kadar uyku zamanlayıcısı ayarlayın. Süre dolduğunda, ses seviyesi 3 saniye içinde pürüzsüzce azalarak (fade-out) kendiliğinden durur.
-- **Kayıtlı Miksler**: Favori ses kombinasyonlarınızı ve ses seviyesi konfigürasyonlarınızı kaydedin, tek tıkla geri yükleyin.
-- **Özelleştirilebilir Sesler**: Ses başlıklarını kişiselleştirin, kategoriler atayın ve doğrudan uygulama içinden özel kapak görselleri yükleyin.
+It features a real-time directory watcher, allowing you to drop new audio files (.mp3, .wav, .ogg, .flac, .m4a) directly into your local sounds folder and listen to them instantly without restarting the app.
 
 ---
 
-## Başlangıç 🛠️
+## Key Features 🚀
 
-### Gereksinimler
-Geliştirme ortamında çalıştırmak için bilgisayarınızda [Node.js](https://nodejs.org/) kurulu olmalıdır.
+- **Smart Simultaneous Audio Playback (Max 3 Sounds)**: Play up to 3 nature or white noise sounds simultaneously to create your ideal ambient atmosphere without cluttering the audio space.
+- **Compact & Sleek Grid Layout**: Redesigned compact sound cards allow you to view and control significantly more sounds on your screen at once.
+- **Smooth Audio Crossfading**: Enjoy seamless audio transitions with smooth fade-in and fade-out volume curves when playing, pausing, or changing sounds.
+- **Enhanced Security & Performance**: Powered by Electron's secure custom `media://` protocol and asynchronous non-blocking I/O routines.
+- **System Tray Integration**: PrimeMix minimizes to the system tray so it can run and play sounds in the background. Right-click the tray icon to play/stop all sounds or exit.
+- **Multi-language Support (EN/TR)**: Toggle between English and Turkish languages dynamically. The interface, settings, and sound names/categories translate instantly, and the system tray menu synchronizes with the active language.
+- **Premium Glassmorphic UI**: Enjoy a gorgeous, fully borderless window with a dedicated custom titlebar for native double-click to maximize/restore, smooth hover animations, custom equalizer wave visuals, and dynamic CSS gradients in glowing blue-purple tones.
+- **Real-time Folder Syncing**: Simply drag and drop your music/ambient audio files into the configured folder, and they will show up instantly in the app grid.
+- **Sleep Timer (Fade-out)**: Fall asleep peacefully. Set a sleep timer from 15 minutes to 2 hours. When the time runs out, the volume fades out smoothly before stopping.
+- **Saved Mixes**: Save your favorite combinations of sounds and volume configurations so you can restore them with a single click.
+- **Customizable Sounds**: Personalize sound titles, assign categories, and upload custom cover art directly within the application.
 
-### Kurulum
+---
 
-1. Depoyu klonlayın veya indirin:
+## Screenshots & Icons 📸
+
+<p align="center">
+  <img src="app_icon.png" width="160" alt="PrimeMix Icon" style="border-radius: 20%; box-shadow: 0 10px 25px rgba(0,0,0,0.3);" />
+</p>
+
+---
+
+## Getting Started 🛠️
+
+### Prerequisites
+Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
+
+### Installation
+
+1. Clone or download this repository:
    ```bash
-   git clone [https://github.com/MaximusPrime77/SereneMix.git](https://github.com/MaximusPrime77/SereneMix.git)
-   cd SereneMix
-   
-   Ortam seslerinizi hedef dizine yerleştirin:
-C:\Users\MAXIMUS\PROJECTS\SereneMixSound
+   git clone https://github.com/MaximusPrime77/PrimeMix.git
+   cd PrimeMix
+   ```
+2. Place your ambient sound files in the target directory:
+   `C:\Users\MAXIMUS\PROJECTS\SereneMixSound`
+   *(Or modify `main.js` to change the `SOUNDS_DIR` path to your preference)*.
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-(Veya main.js içerisindeki SOUNDS_DIR yolunu kendi tercihinize göre değiştirin).
-
-Bağımlılıkları yükleyin:
-
-Bash
-npm install
-Uygulamayı Çalıştırma
-Geliştirme modunda başlatmak için:
-
-Bash
+### Running the App
+Start the app in development mode:
+```bash
 npm start
-Dağıtım / Taşınabilir ZIP Paketini Oluşturma
-Uygulamayı Windows için taşınabilir bir arşiv paketi haline getirmek için:
+```
 
-Bash
+### Packaging / Building Portable Executable
+To package the app into a single, standalone, portable `.exe` file for Windows:
+```bash
 npm run build
-İşlem tamamlandığında, paketlenmiş .zip dosyası doğrudan dist/ dizini altında yer alacaktır.
+```
+Once the build completes, your portable executable will be located in the `dist/` directory.
 
-[!IMPORTANT]
-Kullanım Kılavuzu (Taşınabilir Sürüm):
+> [!IMPORTANT]
+> **How to Run the App:**
+> 
+> ### 📌 For Portable Version (`PrimeMix.1.0.0.portable.exe`):
+> - **Dedicated Folder Required:** To avoid cluttering your Desktop or Downloads folder, place `PrimeMix.1.0.0.portable.exe` inside a dedicated folder. When executed, it will automatically create a folder named `PrimeMix_Data` in the same directory to store your audio files, custom cover art, and configuration data.
+> - **First Launch Delay:** On the very first launch, the application will take a few seconds to extract and copy the default sounds to the `PrimeMix_Data` folder.
+> - **Portability:** If you want to carry your custom sounds and configurations to another computer, simply copy both the `.exe` file and its adjacent `PrimeMix_Data` folder together.
 
-Kurulum Gerektirmez: İndirdiğiniz SereneMix-1.0.0-win.zip arşivi, uygulamanın çalışması için gerekli tüm bağımlılıkları ve varsayılan sesleri içeren SereneMix_Data klasörünü önceden paketlenmiş olarak barındırır.
+---
 
-Doğrudan Çalıştırma: ZIP dosyasını bilgisayarınızda dilediğiniz bir klasöre (örn: C:\Apps\SereneMix\) ayıklayın ve içerisindeki SereneMix.exe dosyasına çift tıklayarak uygulamayı anında başlatın.
+## Project Structure 📁
 
-Tam Taşınabilirlik (Portable): Tüm sesleriniz, özel kapak görselleriniz ve kullanıcı yapılandırmalarınız bu klasör içerisinde saklanır. Uygulamayı başka bir bilgisayara taşımak isterseniz, yalnızca ayıkladığınız bu klasörü kopyalamanız yeterlidir.
+```
+PrimeMix/
+├── package.json        # Build config & dependencies
+├── main.js             # Electron main process (system tray, window, IPC, file watcher, media:// protocol)
+├── preload.js          # Electron secure IPC bridge
+├── app_icon.png        # High-res blue-purple app logo
+├── tray_icon.png       # Transparent tray icon
+└── renderer/           # Frontend assets
+    ├── index.html      # UI Layout & Modals
+    ├── styles.css      # Custom glassmorphic styling & compact card grid
+    └── app.js          # Playback logic, max 3 sound limit, timer, crossfading & UI interactions
+```
 
-Masaüstü Kısayolu: Kolay erişim sağlamak için klasör içindeki SereneMix.exe dosyasına sağ tıklayıp masaüstünüze bir kısayol oluşturabilirsiniz.
+---
 
-	  
-	## Kullanılan Teknolojiler 💻
-Electron (v31.0.0)
+## Technologies Used 💻
 
-Node.js (Yerleşik fs modülü ve dizin izleme)
+- **Electron** (v31.0.0)
+- **Node.js** (Native `fs` module, async I/O & directory watching)
+- **HTML5 Audio API** (Looping, play/pause controls, volume mapping & crossfading)
+- **Vanilla CSS** (Custom CSS Gradients, Glassmorphism, Backdrop filters)
 
-HTML5 Audio API (Döngüsel oynatma, oynat/durdur kontrolleri, ses haritalama)
+---
 
-Vanilla CSS (Özel CSS Gradyanları, Glassmorphism, Backdrop filtreleri)
+## Author 👤
 
-Yazar 👤
-Maximus Decimus Meridius tarafından ❤️ ile geliştirildi ve tasarlandı.
+Developed and designed with ❤️ by **Maximus Decimus Meridius**
+- **GitHub**: [@MaximusPrime77](https://github.com/MaximusPrime77)
+- **Email**: b.maximus.prime@gmail.com
 
-GitHub: @MaximusPrime77
+---
 
-E-posta: b.maximus.prime@gmail.com
+## License 📄
 
-Lisans 📄
-Bu proje MIT Lisansı ile lisanslanmıştır - detaylar için LICENSE dosyasına göz atabilirsiniz.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
