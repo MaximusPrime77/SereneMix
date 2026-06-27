@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, dialog, shell, nativeImage, protocol, net } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, dialog, shell, nativeImage, protocol, net, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { pathToFileURL } = require('url');
@@ -10,6 +10,9 @@ protocol.registerSchemesAsPrivileged([
 
 let mainWindow;
 let appTray;
+let isMiniMode = false;
+let normalBounds = null;
+
 const isPackaged = app.isPackaged;
 const EXE_DIR = process.env.PORTABLE_EXECUTABLE_DIR || path.dirname(process.execPath);
 
@@ -49,10 +52,8 @@ async function copyFolderAsync(from, to) {
 
 async function checkAndMigrateSounds() {
   try {
-    // Only migrate if we are packaged
     if (!isPackaged) return;
 
-    // Check if SOUNDS_DIR has any audio files
     const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.flac'];
     let hasAudio = false;
     if (fs.existsSync(SOUNDS_DIR)) {
@@ -63,41 +64,29 @@ async function checkAndMigrateSounds() {
     if (!hasAudio) {
       console.log('PrimeMix_Data is empty. Starting sound migration...');
       
-      // Candidate 1: The unpacked temp directory (extraFiles location for portable target)
       const tempExtraDir = path.join(path.dirname(process.execPath), 'PrimeMix_Data');
-      
-      // Candidate 2: Dev local directory (fallback)
       const devDir = path.resolve(__dirname, '..', 'PrimeMixSound');
       
       let sourceDir = null;
-      
       if (fs.existsSync(tempExtraDir)) {
         const tempFiles = await fs.promises.readdir(tempExtraDir);
-        const tempHasAudio = tempFiles.some(file => audioExtensions.includes(path.extname(file).toLowerCase()));
-        if (tempHasAudio) {
+        if (tempFiles.some(file => audioExtensions.includes(path.extname(file).toLowerCase()))) {
           sourceDir = tempExtraDir;
         }
       }
       
       if (!sourceDir && fs.existsSync(devDir)) {
         const devFiles = await fs.promises.readdir(devDir);
-        const devHasAudio = devFiles.some(file => audioExtensions.includes(path.extname(file).toLowerCase()));
-        if (devHasAudio) {
+        if (devFiles.some(file => audioExtensions.includes(path.extname(file).toLowerCase()))) {
           sourceDir = devDir;
         }
       }
       
       if (sourceDir) {
-        console.log(`Migrating sounds from ${sourceDir} to ${SOUNDS_DIR}`);
         await copyFolderAsync(sourceDir, SOUNDS_DIR);
-        console.log('Migration completed successfully!');
-        
-        // Notify renderer that sounds have changed so it can load them
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('sounds-changed');
         }
-      } else {
-        console.log('No default sound source found for migration.');
       }
     }
   } catch (error) {
@@ -109,9 +98,9 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1120,
     height: 760,
-    minWidth: 800,
-    minHeight: 600,
-    frame: false, // Frameless for premium borderless look
+    minWidth: 340,
+    minHeight: 220,
+    frame: false,
     transparent: false,
     backgroundColor: '#0b0c10',
     hasShadow: true,
@@ -119,19 +108,19 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      webSecurity: true // Secured with custom media:// protocol
+      webSecurity: true
     },
-    show: true // Show immediately for faster perceived startup
+    show: true
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
   mainWindow.on('maximize', () => {
-    mainWindow.webContents.send('window-state-changed', 'maximized');
+    if (!isMiniMode) mainWindow.webContents.send('window-state-changed', 'maximized');
   });
 
   mainWindow.on('unmaximize', () => {
-    mainWindow.webContents.send('window-state-changed', 'restored');
+    if (!isMiniMode) mainWindow.webContents.send('window-state-changed', 'restored');
   });
 
   mainWindow.on('close', (event) => {
@@ -177,9 +166,7 @@ function createTray() {
   const icon = nativeImage.createFromPath(iconPath);
   appTray = new Tray(icon);
   
-  // Default to English on startup
   updateTrayMenu('en');
-
   appTray.setToolTip('PrimeMix');
 
   appTray.on('click', () => {
@@ -199,7 +186,6 @@ function toggleWindow() {
 
 // App lifecycle
 app.whenReady().then(() => {
-  // Setup secure media protocol handler
   protocol.handle('media', (request) => {
     let urlPath = request.url.replace(/^media:\/\//, '');
     if (/^[a-zA-Z]\//.test(urlPath)) {
@@ -212,8 +198,23 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
   startWatcher();
+
+  // Global Shortcuts for Media Play/Pause
+  try {
+    globalShortcut.register('MediaPlayPause', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('toggle-global-play');
+      }
+    });
+    globalShortcut.register('CommandOrControl+Alt+P', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('toggle-global-play');
+      }
+    });
+  } catch (err) {
+    console.error('Global shortcut registration failed:', err);
+  }
   
-  // Run migration asynchronously to prevent blocking window creation
   setTimeout(() => {
     checkAndMigrateSounds();
   }, 50);
@@ -221,6 +222,10 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 app.on('window-all-closed', () => {
@@ -252,7 +257,7 @@ function startWatcher() {
   }
 }
 
-// IPC Communication handlers (Asynchronous & Non-blocking)
+// IPC Handlers
 ipcMain.handle('get-sounds', async () => {
   try {
     if (!fs.existsSync(SOUNDS_DIR)) {
@@ -264,27 +269,20 @@ ipcMain.handle('get-sounds', async () => {
     const files = await fs.promises.readdir(SOUNDS_DIR);
     const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.flac'];
     
-    // Read metadata asynchronously
     let metadata = {};
     if (fs.existsSync(METADATA_PATH)) {
       try {
         const metaContent = await fs.promises.readFile(METADATA_PATH, 'utf-8');
         metadata = JSON.parse(metaContent);
-      } catch (err) {
-        console.error('Metadata parsing error:', err);
-      }
+      } catch (err) {}
     }
 
     const soundList = [];
-
     files.forEach(file => {
       const ext = path.extname(file).toLowerCase();
       if (audioExtensions.includes(ext)) {
         const fileMetadata = metadata[file] || {};
-        
-        let autoTitle = path.basename(file, ext)
-          .replace(/[-_]/g, ' ')
-          .replace(/\b\w/g, c => c.toUpperCase());
+        let autoTitle = path.basename(file, ext).replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
         soundList.push({
           filename: file,
@@ -304,7 +302,6 @@ ipcMain.handle('get-sounds', async () => {
   }
 });
 
-// Save sound metadata asynchronously
 ipcMain.handle('save-sound-metadata', async (event, filename, data) => {
   try {
     let metadata = {};
@@ -315,11 +312,7 @@ ipcMain.handle('save-sound-metadata', async (event, filename, data) => {
       } catch (e) {}
     }
 
-    metadata[filename] = {
-      ...(metadata[filename] || {}),
-      ...data
-    };
-
+    metadata[filename] = { ...(metadata[filename] || {}), ...data };
     await fs.promises.writeFile(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
     return { success: true };
   } catch (error) {
@@ -327,7 +320,6 @@ ipcMain.handle('save-sound-metadata', async (event, filename, data) => {
   }
 });
 
-// Delete sound file physically and clean its metadata asynchronously
 ipcMain.handle('delete-sound', async (event, filename) => {
   try {
     const filePath = path.join(SOUNDS_DIR, filename);
@@ -346,31 +338,23 @@ ipcMain.handle('delete-sound', async (event, filename) => {
     if (metadata[filename] && metadata[filename].cover) {
       const coverPath = path.join(SOUNDS_DIR, metadata[filename].cover);
       if (fs.existsSync(coverPath)) {
-        try {
-          await fs.promises.unlink(coverPath);
-        } catch (e) {
-          console.error('Failed to delete cover file:', e);
-        }
+        try { await fs.promises.unlink(coverPath); } catch (e) {}
       }
     }
 
     delete metadata[filename];
     await fs.promises.writeFile(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
-
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
   }
 });
 
-// Add sound file from dialog asynchronously
 ipcMain.handle('add-sound-dialog', async () => {
   try {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
-      filters: [
-        { name: 'Ses Dosyaları', extensions: ['mp3', 'wav', 'ogg', 'm4a', 'flac'] }
-      ]
+      filters: [{ name: 'Ses Dosyaları', extensions: ['mp3', 'wav', 'ogg', 'm4a', 'flac'] }]
     });
 
     if (result.canceled || result.filePaths.length === 0) {
@@ -380,7 +364,6 @@ ipcMain.handle('add-sound-dialog', async () => {
     const srcPath = result.filePaths[0];
     const filename = path.basename(srcPath);
     const destPath = path.join(SOUNDS_DIR, filename);
-
     await fs.promises.copyFile(srcPath, destPath);
 
     return { success: true, filename: filename };
@@ -389,14 +372,11 @@ ipcMain.handle('add-sound-dialog', async () => {
   }
 });
 
-// Add cover image from dialog asynchronously
 ipcMain.handle('add-cover-dialog', async (event, soundFilename) => {
   try {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
-      filters: [
-        { name: 'Resim Dosyaları', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }
-      ]
+      filters: [{ name: 'Resim Dosyaları', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }]
     });
 
     if (result.canceled || result.filePaths.length === 0) {
@@ -418,11 +398,7 @@ ipcMain.handle('add-cover-dialog', async (event, soundFilename) => {
       } catch (e) {}
     }
 
-    metadata[soundFilename] = {
-      ...(metadata[soundFilename] || {}),
-      cover: `covers/${coverFilename}`
-    };
-
+    metadata[soundFilename] = { ...(metadata[soundFilename] || {}), cover: `covers/${coverFilename}` };
     await fs.promises.writeFile(METADATA_PATH, JSON.stringify(metadata, null, 2), 'utf-8');
 
     return { success: true, coverPath: `covers/${coverFilename}` };
@@ -431,46 +407,86 @@ ipcMain.handle('add-cover-dialog', async (event, soundFilename) => {
   }
 });
 
-// Window controls
-ipcMain.on('window-minimize', () => {
-  if (mainWindow) mainWindow.minimize();
-});
+// Import/Export Mixes Dialogs
+ipcMain.handle('export-mixes-dialog', async (event, mixesData) => {
+  try {
+    const result = await dialog.showSaveDialog({
+      title: 'Karışımları Dışa Aktar',
+      defaultPath: 'PrimeMix_Karisimlar.json',
+      filters: [{ name: 'JSON Dosyaları', extensions: ['json'] }]
+    });
 
-ipcMain.on('window-maximize', () => {
-  if (!mainWindow) return;
-  if (mainWindow.isMaximized()) {
-    mainWindow.unmaximize();
-  } else {
-    mainWindow.maximize();
+    if (result.canceled || !result.filePath) {
+      return { success: false, canceled: true };
+    }
+
+    await fs.promises.writeFile(result.filePath, JSON.stringify(mixesData, null, 2), 'utf-8');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
   }
 });
 
-ipcMain.on('window-close', () => {
-  if (mainWindow) mainWindow.hide();
+ipcMain.handle('import-mixes-dialog', async () => {
+  try {
+    const result = await dialog.showOpenDialog({
+      title: 'Karışımları İçe Aktar',
+      properties: ['openFile'],
+      filters: [{ name: 'JSON Dosyaları', extensions: ['json'] }]
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return { success: false, canceled: true };
+    }
+
+    const content = await fs.promises.readFile(result.filePaths[0], 'utf-8');
+    const importedData = JSON.parse(content);
+    return { success: true, data: importedData };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 });
 
-ipcMain.on('open-folder', () => {
-  shell.openPath(SOUNDS_DIR);
+// Mini Mode Toggle IPC
+ipcMain.handle('toggle-mini-mode', async () => {
+  if (!mainWindow) return { success: false };
+
+  isMiniMode = !isMiniMode;
+
+  if (isMiniMode) {
+    normalBounds = mainWindow.getBounds();
+    mainWindow.setAlwaysOnTop(true, 'floating');
+    mainWindow.setBounds({ width: 340, height: 240 });
+    mainWindow.setResizable(false);
+  } else {
+    mainWindow.setAlwaysOnTop(false);
+    mainWindow.setResizable(true);
+    if (normalBounds) {
+      mainWindow.setBounds(normalBounds);
+    } else {
+      mainWindow.setBounds({ width: 1120, height: 760 });
+    }
+  }
+
+  mainWindow.webContents.send('mini-mode-changed', isMiniMode);
+  return { success: true, isMiniMode: isMiniMode };
 });
 
-ipcMain.on('open-external', (event, url) => {
-  shell.openExternal(url);
+// Window controls
+ipcMain.on('window-minimize', () => { if (mainWindow) mainWindow.minimize(); });
+ipcMain.on('window-maximize', () => {
+  if (!mainWindow || isMiniMode) return;
+  if (mainWindow.isMaximized()) mainWindow.unmaximize();
+  else mainWindow.maximize();
 });
+ipcMain.on('window-close', () => { if (mainWindow) mainWindow.hide(); });
+ipcMain.on('open-folder', () => { shell.openPath(SOUNDS_DIR); });
+ipcMain.on('open-external', (event, url) => { shell.openExternal(url); });
+ipcMain.on('set-language', (event, lang) => { updateTrayMenu(lang); });
 
-ipcMain.on('set-language', (event, lang) => {
-  updateTrayMenu(lang);
-});
-
-// Startup login settings
-ipcMain.handle('get-startup-settings', () => {
-  return app.getLoginItemSettings().openAtLogin;
-});
-
+ipcMain.handle('get-startup-settings', () => { return app.getLoginItemSettings().openAtLogin; });
 ipcMain.handle('set-startup-settings', (event, openAtLogin) => {
-  app.setLoginItemSettings({
-    openAtLogin: openAtLogin,
-    path: app.getPath('exe')
-  });
+  app.setLoginItemSettings({ openAtLogin: openAtLogin, path: app.getPath('exe') });
   return { success: true };
 });
 

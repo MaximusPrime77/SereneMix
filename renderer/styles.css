@@ -485,23 +485,32 @@ body {
 
 .categories-tabs {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   background: rgba(15, 17, 26, 0.5);
   padding: 4px;
   border-radius: 10px;
   border: 1px solid var(--glass-border);
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+  scrollbar-width: none; /* Firefox */
+}
+
+.categories-tabs::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 .category-tab {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -517,8 +526,9 @@ body {
 
 .search-bar-container {
   position: relative;
-  width: 240px;
-  -webkit-app-region: no-drag; /* Exclude search bar from dragging */
+  width: 190px;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
 }
 
 .search-bar-container input {
@@ -526,17 +536,16 @@ body {
   background: rgba(15, 17, 26, 0.5);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
-  padding: 8px 12px 8px 36px;
+  padding: 7px 10px 7px 32px;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   outline: none;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .search-bar-container input:focus {
   border-color: var(--accent-color);
-  width: 280px;
 }
 
 .search-bar-container svg {
@@ -653,18 +662,82 @@ body {
   height: 16px;
 }
 
+/* Card Cover Art Overlay Actions */
+.cover-top-left-actions {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sound-card:hover .cover-top-left-actions {
+  opacity: 1;
+}
+
+.btn-cover-action {
+  background: rgba(15, 17, 26, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-app-region: no-drag;
+}
+
+.btn-cover-action.btn-card-fav {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
+  opacity: 0.85;
+}
+
+.sound-card:hover .btn-cover-action.btn-card-fav,
+.btn-cover-action.btn-card-fav.active {
+  opacity: 1;
+}
+
+.btn-cover-action.btn-card-fav.active {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.btn-cover-action:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  transform: scale(1.08);
+}
+
+.btn-cover-action.btn-card-delete:hover {
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  border-color: #ef4444;
+}
+
 /* Sound Info */
 .sound-info-container {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .sound-meta {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  max-width: 75%;
+  width: 100%;
 }
 
 .sound-name {
@@ -693,7 +766,7 @@ body {
   opacity: 1;
 }
 
-.btn-card-edit, .btn-card-delete {
+.btn-card-edit, .btn-card-delete, .btn-card-fav {
   color: var(--text-secondary);
   transition: all 0.2s;
   padding: 4px;
@@ -704,12 +777,16 @@ body {
   cursor: pointer;
 }
 
-.btn-card-edit:hover, .btn-card-delete:hover {
+.btn-card-edit:hover, .btn-card-delete:hover, .btn-card-fav:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
 .btn-card-edit:hover {
   color: var(--text-primary);
+}
+
+.btn-card-fav:hover, .btn-card-fav.active {
+  color: #f59e0b; /* Golden warm yellow for favorites */
 }
 
 .btn-card-delete:hover {
@@ -1397,6 +1474,142 @@ a.info-value:hover {
 
 .action-btn.danger:hover {
   background: #dc2626;
+}
+
+/* Mixes Title Actions */
+.mixes-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Pomodoro Focus Timer Module */
+.pomodoro-container {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+
+.pomodoro-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pomodoro-modes {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 3px;
+  border-radius: 8px;
+}
+
+.pomo-mode-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: inherit; /* Outfit font — eksikti */
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pomo-mode-btn.active {
+  background: var(--accent-color);
+  color: white;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.pomodoro-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+#pomodoro-time {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-family: monospace;
+  color: var(--text-primary);
+}
+
+.pomodoro-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-pomo-action {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--text-primary);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-pomo-action:hover {
+  background: var(--accent-color);
+  transform: scale(1.08);
+}
+
+/* Mini Mode Dedicated Styles */
+.mini-mode-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0b0c10;
+  padding: 12px;
+  gap: 10px;
+}
+
+.mini-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  -webkit-app-region: drag;
+}
+
+.mini-controls {
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+
+.mini-btn {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.mini-active-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* App container transition for dynamic atmosphere */
+.app-container {
+  transition: background 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 

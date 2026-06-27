@@ -9,9 +9,13 @@ contextBridge.exposeInMainWorld('api', {
   openExternal: (url) => ipcRenderer.send('open-external', url),
   getStartupSettings: () => ipcRenderer.invoke('get-startup-settings'),
   setStartupSettings: (openAtLogin) => ipcRenderer.invoke('set-startup-settings', openAtLogin),
-  getSoundUrl: (filename) => ipcRenderer.invoke('get-sound-url', filename),
   deleteSound: (filename) => ipcRenderer.invoke('delete-sound', filename),
   setLanguage: (lang) => ipcRenderer.send('set-language', lang),
+  
+  // Professional New IPCs
+  toggleMiniMode: () => ipcRenderer.invoke('toggle-mini-mode'),
+  exportMixes: (mixesData) => ipcRenderer.invoke('export-mixes-dialog', mixesData),
+  importMixes: () => ipcRenderer.invoke('import-mixes-dialog'),
   
   // Window controls
   minimize: () => ipcRenderer.send('window-minimize'),
@@ -20,13 +24,13 @@ contextBridge.exposeInMainWorld('api', {
   
   // Event listeners
   onStopAllSounds: (callback) => {
-    const subscription = (event) => callback();
+    const subscription = () => callback();
     ipcRenderer.on('stop-all-sounds', subscription);
     return () => ipcRenderer.removeListener('stop-all-sounds', subscription);
   },
   
   onSoundsChanged: (callback) => {
-    const subscription = (event) => callback();
+    const subscription = () => callback();
     ipcRenderer.on('sounds-changed', subscription);
     return () => ipcRenderer.removeListener('sounds-changed', subscription);
   },
@@ -35,5 +39,17 @@ contextBridge.exposeInMainWorld('api', {
     const subscription = (event, state) => callback(state);
     ipcRenderer.on('window-state-changed', subscription);
     return () => ipcRenderer.removeListener('window-state-changed', subscription);
+  },
+
+  onToggleGlobalPlay: (callback) => {
+    const subscription = () => callback();
+    ipcRenderer.on('toggle-global-play', subscription);
+    return () => ipcRenderer.removeListener('toggle-global-play', subscription);
+  },
+
+  onMiniModeChanged: (callback) => {
+    const subscription = (event, isMini) => callback(isMini);
+    ipcRenderer.on('mini-mode-changed', subscription);
+    return () => ipcRenderer.removeListener('mini-mode-changed', subscription);
   }
 });
