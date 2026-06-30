@@ -103,6 +103,21 @@
   <img src="app_icon.png" width="160" alt="PrimeMix Icon" style="border-radius: 20%; box-shadow: 0 10px 25px rgba(0,0,0,0.3);" />
 </p>
 
+### 📱 Main Application
+<p align="center">
+  <img src="screenshots/main_app.png" width="800" alt="PrimeMix Main Interface" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" />
+</p>
+
+### 🎵 Active Sounds & Custom Mixing
+<p align="center">
+  <img src="screenshots/active_sounds.png" width="800" alt="PrimeMix Active Sounds Panel" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" />
+</p>
+
+### 🗟 Mini Mode (Compact Overlay)
+<p align="center">
+  <img src="screenshots/mini_mode.png" width="340" alt="PrimeMix Mini Mode" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" />
+</p>
+
 ---
 
 ## Getting Started 🛠️
