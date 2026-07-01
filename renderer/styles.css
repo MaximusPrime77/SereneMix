@@ -495,12 +495,12 @@ body {
 
 .categories-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   background: rgba(15, 17, 26, 0.5);
   padding: 4px;
   border-radius: 10px;
   border: 1px solid var(--glass-border);
-  overflow-x: auto;
   flex: 1;
   min-width: 0;
   scrollbar-width: none; /* Firefox */
@@ -514,7 +514,7 @@ body {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 8px;
   font-family: inherit;
   font-size: 12px;
@@ -522,6 +522,8 @@ body {
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1 0 auto;
+  text-align: center;
 }
 
 .category-tab:hover {
@@ -565,6 +567,17 @@ body {
   transform: translateY(-50%);
   color: var(--text-secondary);
   pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .workspace-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .search-bar-container {
+    width: 100%;
+  }
 }
 
 /* Sounds Grid */
